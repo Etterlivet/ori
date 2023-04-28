@@ -43,7 +43,7 @@ loader.setLibraryPath( 'https://cdn.jsdelivr.net/npm/rhino3dm@0.15.0-beta/' )
 
 // initialise 'data' object that will be used by compute()
 const data = {
-  definition: 'Ring_V03a.gh',
+  definition: 'babi_1.gh',
   inputs: getInputs()
 }
 
@@ -161,7 +161,7 @@ function init() {
  */
 async function compute() {
   // construct url for GET /solve/definition.gh?name=value(&...)
-  const url = new URL('EL/solve/' + data.definition, window.location.origin)
+  const url = new URL('ori/solve/' + data.definition, window.location.origin)
   Object.keys(data.inputs).forEach(key => url.searchParams.append(key, data.inputs[key]))
   console.log(url.toString())
   
