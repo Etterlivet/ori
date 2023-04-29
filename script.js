@@ -167,12 +167,19 @@ async function compute() {
   
   try {
     const response = await fetch(url)
+    
+ 
   
     if(!response.ok) {
       // TODO: check for errors in response json
       throw new Error(response.statusText)
     }
 
+  // <-- add this line
+    const responseBody = await response.text()  
+    console.log(responseBody) 
+	  
+	  
     const responseJson = await response.json()
     console.log(responseJson)
 
