@@ -174,6 +174,7 @@ async function compute() {
     }
 
     const responseJson = await response.json()
+    console.log(responseJson)
 
     collectResults(responseJson)
 
