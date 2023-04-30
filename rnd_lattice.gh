@@ -1,4 +1,4 @@
-0{
+{
     "name": "rnd_lattice.gh",
     "description": "Uses the multipipe component to create a mesh lattice.",
     "inputs": [
