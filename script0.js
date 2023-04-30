@@ -49,16 +49,18 @@ function init() {
     const ambientLight = new THREE.AmbientLight()
     scene.add( ambientLight )
 
-    // Load JSON file
+   // Load JSON file
       const loader = new THREE.ObjectLoader();
+      console.log('Scene Loading: ', loader)
     loader.load( '1.json', function ( object ) {
-
+        console.log('Object Loaded: ', object)
       // set material
       object.traverse(function (child) {
         if (child.isMesh) {
           child.material = material;
         }
       })
+
 
       // clear objects from scene. do this here to avoid blink
         scene.traverse(child => {
