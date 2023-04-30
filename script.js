@@ -178,9 +178,22 @@ async function compute() {
   // <-- add this line
     // const responseBody = await response.text()  
    //  console.log(responseBody) 
+
+  // <-- add this line
+   const responseJson = await response.json();
+
+// check if the output is a mesh
+if (responseJson && responseJson.values && responseJson.values[0] && responseJson.values[0].data && responseJson.values[0].data.type === "Mesh") {
+  const meshData = responseJson.values[0].data;
+  const mesh = rhino.CommonObject.decode(meshData);
+  // do something with the mesh object
+} else {
+  // handle error or invalid output
+}
 	  
+// 	  
 	  
-    const responseJson = await response.json()
+   
   
 
     collectResults(responseJson)
