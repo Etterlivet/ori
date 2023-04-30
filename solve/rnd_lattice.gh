@@ -1,0 +1,49 @@
+0{
+    "name": "rnd_lattice.gh",
+    "description": "Uses the multipipe component to create a mesh lattice.",
+    "inputs": [
+        {
+            "description": "",
+            "atLeast": 1,
+            "atMost": 2147483647,
+            "treeAccess": false,
+            "default": 10,
+            "minimum": 0.5,
+            "maximum": 10,
+            "name": "boxSize",
+            "nickname": null,
+            "paramType": "Number"
+        },
+        {
+            "description": "",
+            "atLeast": 1,
+            "atMost": 2147483647,
+            "treeAccess": false,
+            "default": 42,
+            "minimum": 10,
+            "maximum": 100,
+            "name": "count",
+            "nickname": null,
+            "paramType": "Number"
+        },
+        {
+            "description": "",
+            "atLeast": 1,
+            "atMost": 2147483647,
+            "treeAccess": false,
+            "default": 7,
+            "minimum": 3,
+            "maximum": 10,
+            "name": "nodeSize",
+            "nickname": null,
+            "paramType": "Number"
+        }
+    ],
+    "outputs": [
+        {
+            "name": "RH_OUT:meshb64",
+            "nickname": null,
+            "paramType": "Text"
+        }
+    ]
+}
