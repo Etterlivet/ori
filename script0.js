@@ -1,47 +1,146 @@
+
+
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.126.0/build/three.module.js'
 import { OrbitControls } from 'https://cdn.jsdelivr.net/npm/three@0.126.0/examples/jsm/controls/OrbitControls.js'
 import { Rhino3dmLoader } from 'https://cdn.jsdelivr.net/npm/three@0.126.0/examples/jsm/loaders/3DMLoader.js'
+import rhino3dm from 'https://cdn.jsdelivr.net/npm/rhino3dm@0.15.0-beta/rhino3dm.module.js'
 import { HDRCubeTextureLoader } from 'https://cdn.jsdelivr.net/npm/three@0.124.0/examples/jsm/loaders/HDRCubeTextureLoader.js'
 
 
+//import * as THREE from './three.module.js'
+//import { OrbitControls } from './OrbitControls.js'
+//import { Rhino3dmLoader } from './3DMLoader.js'
+//import rhino3dm from './rhino3dm.module.js'
+//import { HDRCubeTextureLoader } from './HDRCubeTextureLoader.js'
+
+
 let material = new THREE.MeshStandardMaterial( {
-  color: 0xffffff,
+  //color: 0xffffff,
+  color: 0xFF8C17,
   metalness: 1.0,
   roughness: 0.0
 } );
 
+// set up loader for converting the results to threejs
+//const tl = new THREE.TextureLoader()
+//    tl.setPath('materials/')
+//    let material = new THREE.MeshPhysicalMaterial()
+//    //material.map          = tl.load('streaked-metal1_base.png')
+//    material.aoMmap       = tl.load('streaked-metal1_ao.png')
+//    material.normalMap    = tl.load('streaked-metal1_normal.png')
+//    material.metalnessMap = tl.load('streaked-metal1_metallic.png')
+ //   material.metalness = 1.0
+//    material.roughness = 1.0
+//    material.color.set(0xffcc88)
+
+//const material = new THREE.MeshPhongMaterial( {
+  //       color: 0xffffff,
+  //       metalness: 0.4,
+  //       roughness: 0.0
+  //   } )
+
 const loader = new Rhino3dmLoader()
 loader.setLibraryPath( 'https://cdn.jsdelivr.net/npm/rhino3dm@0.15.0-beta/' )
 
+// initialise 'data' object that will be used by compute()
+const data = {
+  definition: 'b_ring.gh',
+  inputs: getInputs()
+}
+
+// globals
+// test
+let rhino, doc
+
+rhino3dm().then(async m => {
+    rhino = m
+    
+  
+   
+    
+    init()
+    compute()
+})
+
+const downloadButton = document.getElementById("downloadButton")
+downloadButton.onclick = download
+
+  /////////////////////////////////////////////////////////////////////////////
+ //                            HELPER  FUNCTIONS                            //
+/////////////////////////////////////////////////////////////////////////////
+
+/**
+ * Gets <input> elements from html and sets handlers
+ * (html is generated from the grasshopper definition)
+ */
+function getInputs() {
+  const inputs = {}
+  for (const input of document.getElementsByTagName('input')) {
+    switch (input.type) {
+      case 'number':
+        inputs[input.id] = input.valueAsNumber
+        input.onchange = onSliderChange
+        break
+      case 'range':
+        inputs[input.id] = input.valueAsNumber
+        input.onmouseup = onSliderChange
+        input.ontouchend = onSliderChange
+        break
+      case 'checkbox':
+        inputs[input.id] = input.checked
+        input.onclick = onSliderChange
+        break
+      default:
+        break
+    }
+  }
+  return inputs
+}
+
+// more globals
 let scene, camera, renderer, controls
 
+/**
+ * Sets up the scene, camera, renderer, lights and controls and starts the animation
+ */
 function init() {
 
+    // Rhino models are z-up, so set this as the default
     THREE.Object3D.DefaultUp = new THREE.Vector3( 0, 0, 1 );
 
+    // create a scene and a camera
     scene = new THREE.Scene()
     scene.background = new THREE.Color(1, 1, 1)
     camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 1, 1000)
-    camera.position.set(1, -1, 1)
+    camera.position.set(1, -1, 1) // like perspective view
+    
+    //very light grey for background, like rhino
 
+    //scene.background = new THREE.Color('whitesmoke')
+
+    // create the renderer and add it to the html
     renderer = new THREE.WebGLRenderer({ antialias: true })
     renderer.physicallyCorrectLights = true;
-    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+		renderer.toneMapping = THREE.ACESFilmicToneMapping;
     renderer.setPixelRatio( window.devicePixelRatio )
     renderer.setSize(window.innerWidth, window.innerHeight)
     document.body.appendChild(renderer.domElement)
 
     let cubeMap
 
-    cubeMap = new HDRCubeTextureLoader()
+   cubeMap = new HDRCubeTextureLoader()
          .setPath( 'assets/' )
          .setDataType( THREE.UnsignedByteType )
          .load( [ 'px.hdr', 'nx.hdr', 'py.hdr', 'ny.hdr', 'pz.hdr', 'nz.hdr' ] )
 
+   //cubeMap = new THREE.CubeTextureLoader()
+     //   .setPath('assets/')
+       // .load( [ 'px.png', 'nx.png', 'py.png', 'ny.png', 'pz.png', 'nz.png' ] )
 
-
+    // add some controls to orbit the camera
     controls = new OrbitControls(camera, renderer.domElement)
 
+    // add a directional light
     const directionalLight = new THREE.DirectionalLight( 0xffffff )
     directionalLight.intensity = 2
     scene.add( directionalLight )
@@ -49,37 +148,162 @@ function init() {
     const ambientLight = new THREE.AmbientLight()
     scene.add( ambientLight )
 
-   // Load JSON file
-      const loader = new THREE.ObjectLoader();
-      console.log('Scene Loading: ', loader)
-    loader.load( '1.json', function ( object ) {
-        console.log('Object Loaded: ', object)
-      // set material
-      object.traverse(function (child) {
-        if (child.isMesh) {
-          child.material = material;
+    scene.background = cubeMap
+    material.envMap = scene.background
+
+    // handle changes in the window size
+    window.addEventListener( 'resize', onWindowResize, false )
+
+    animate()
+}
+
+/**
+ * Call appserver
+ */
+
+
+async function compute() {
+  // construct url for GET /ori/solve/definition.gh?name=value(&...)
+  const url = new URL('ori/solve/' + data.definition, window.location.origin)
+  Object.keys(data.inputs).forEach(key => url.searchParams.append(key, data.inputs[key]))
+  console.log(url.toString())
+
+  try {
+    const inputId = Object.keys(data.inputs).sort().join('-');
+    // search for the JSON response file in the "original/solve" directory
+    const response = await fetch(`original/solve/${data.definition.split('.')[0]}-${inputId}.gh`);
+    
+ 
+
+    if(!response.ok) {
+      // TODO: check for errors in response json
+      throw new Error(response.statusText)
+    }
+
+    const responseJson = await response.json();
+
+    // check if the output is a mesh
+    if (responseJson && responseJson.values && responseJson.values[0] && responseJson.values[0].data && responseJson.values[0].data.type === "Mesh") {
+      const meshData = responseJson.values[0].data;
+      const mesh = rhino.CommonObject.decode(meshData);
+    } else {
+      console.error("Failed to compute mesh data");
+    }
+    
+    collectResults(responseJson)
+    
+  } catch(error) {
+    console.error(error);
+  }
+}
+
+/**
+ * Parse response
+ */
+function collectResults(responseJson) {
+
+    const values = responseJson.values
+
+    // clear doc
+    if( doc !== undefined)
+        doc.delete()
+
+    //console.log(values)
+    doc = new rhino.File3dm()
+
+    // for each output (RH_OUT:*)...
+    for ( let i = 0; i < values.length; i ++ ) {
+      // ...iterate through data tree structure...
+      for (const path in values[i].InnerTree) {
+        const branch = values[i].InnerTree[path]
+        // ...and for each branch...
+        for( let j = 0; j < branch.length; j ++) {
+          // ...load rhino geometry into doc
+          const rhinoObject = decodeItem(branch[j])
+          if (rhinoObject !== null) {
+            doc.objects().add(rhinoObject, null)
+          }
         }
-      })
+      }
+    }
 
+    if (doc.objects().count < 1) {
+      console.error('No rhino objects to load!')
+      showSpinner(false)
+      return
+    }
 
-      // clear objects from scene. do this here to avoid blink
+    // load rhino doc into three.js scene
+    const buffer = new Uint8Array(doc.toByteArray()).buffer
+    loader.parse( buffer, function ( object ) 
+    {
+        // debug 
+        
+        object.traverse(child => {
+          child.material = material
+        })
+        
+
+        // clear objects from scene. do this here to avoid blink
         scene.traverse(child => {
             if (!child.isLight) {
                 scene.remove(child)
             }
         })
 
-      // add object to the scene
-      scene.add( object );
+        // add object graph from rhino model to three.js scene
+        scene.add( object )
 
-     // hide spinner and enable download button
+        // hide spinner and enable download button
         showSpinner(false)
         downloadButton.disabled = false
 
         // zoom to extents
         zoomCameraToSelection(camera, controls, scene.children)
+    })
+}
 
-    } )
+/**
+ * Attempt to decode data tree item to rhino geometry
+ */
+function decodeItem(item) {
+  const data = JSON.parse(item.data)
+  if (item.type === 'System.String') {
+    // hack for draco meshes
+    try {
+        return rhino.DracoCompression.decompressBase64String(data)
+    } catch {} // ignore errors (maybe the string was just a string...)
+  } else if (typeof data === 'object') {
+    return rhino.CommonObject.decode(data)
+  }
+  return null
+}
+
+/**
+ * Called when a slider value changes in the UI. Collect all of the
+ * slider values and call compute to solve for a new scene
+ */
+function onSliderChange () {
+  showSpinner(true)
+  // get slider values
+  let inputs = {}
+  for (const input of document.getElementsByTagName('input')) {
+    switch (input.type) {
+    case 'number':
+      inputs[input.id] = input.valueAsNumber
+      break
+    case 'range':
+      inputs[input.id] = input.valueAsNumber
+      break
+    case 'checkbox':
+      inputs[input.id] = input.checked
+      break
+    }
+  }
+  
+  data.inputs = inputs
+
+  compute()
 }
 
 /**
