@@ -181,41 +181,45 @@ function init() {
  * Call appserver
  */
 
-
 async function compute() {
-  // construct url for GET /ori/solve/definition.gh?name=value(&...)
-  const url = new URL('ori/solve/' + data.definition, window.location.origin)
-  Object.keys(data.inputs).forEach(key => url.searchParams.append(key, data.inputs[key]))
-  console.log(url.toString())
+
+  // get the inputs from the html
+  const inputs = getInputs();
+
+  // construct the name of the JSON file to load
+  const filename = Object.values(inputs).join('_') + '.gh';
+
+  // construct the URL for the GET request to load the response file
+  const url = new URL(`solve/${filename}`, window.location.origin);
 
   try {
-    const inputId = Object.keys(data.inputs).sort().join('-');
-    // search for the JSON response file in the "original/solve" directory
-    const response = await fetch(`solve/${inputValues}.gh`);
-    
- 
+    // try to fetch the file from the solve folder
+    const response = await fetch(url);
 
-    if(!response.ok) {
-      // TODO: check for errors in response json
-      throw new Error(response.statusText)
-    }
-
-    const responseJson = await response.json();
-
-    // check if the output is a mesh
-    if (responseJson && responseJson.values && responseJson.values[0] && responseJson.values[0].data && responseJson.values[0].data.type === "Mesh") {
-      const meshData = responseJson.values[0].data;
-      const mesh = rhino.CommonObject.decode(meshData);
+    // if the file was found, load the JSON data
+    if (response.ok) {
+      const json = await response.json();
+      // use the JSON data to create a new Rhino3dm model
+      if (json && json.values && json.values[0] && json.values[0].data && json.values[0].data.type === "Mesh") {
+        const meshData = json.values[0].data;
+        const mesh = rhino.CommonObject.decode(meshData);
+      } else {
+        console.error("Failed to compute mesh data");
+      }
+      collectResults(json);
+      console.log(`Loaded response file: ${filename}`);
+      console.log(`Corresponding URL: ${url.toString()}`);
     } else {
-      console.error("Failed to compute mesh data");
+      // if the file was not found, display an error message
+      console.error('Could not load file: ' + filename);
     }
-    
-    collectResults(responseJson)
-    
-  } catch(error) {
-    console.error(error);
+ collectResults(responseJson)
+  } catch (error) {
+    // if there was an error fetching or parsing the file, display an error message
+    console.error('Error loading file: ' + filename + '\n' + error.message);
   }
 }
+
 
 /**
  * Parse response
