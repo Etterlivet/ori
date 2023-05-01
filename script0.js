@@ -15,25 +15,21 @@ let material = new THREE.MeshStandardMaterial( {
 const loader = new Rhino3dmLoader();
 loader.setLibraryPath('https://cdn.jsdelivr.net/npm/rhino3dm@0.15.0-beta/');
 
-const initialFile = 'solve/b_ring.gh'; // set the initial file here
+const initialFile = 'solve/b_ring.gh';
+const data = {
+  definition: '',
+  inputs: getInputs(),
+};
 
-// load the initial file
+const loader = new Rhino3dmLoader();
+loader.setLibraryPath('https://cdn.jsdelivr.net/npm/rhino3dm@0.15.0-beta/');
 loader.load(initialFile, function (definition) {
   if (definition) {
     data.definition = definition;
+    data.inputs = getInputs();
     compute();
   }
 });
-
-// initialise 'data' object that will be used by compute()
-const response = await fetch(initialFile);
-const definition = await response.text();
-
-const data = {
-  definition,
-  inputs: getInputs()
-};
-
 
 // globals
 // test
