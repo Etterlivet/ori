@@ -1,5 +1,3 @@
-
-
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.126.0/build/three.module.js'
 import { OrbitControls } from 'https://cdn.jsdelivr.net/npm/three@0.126.0/examples/jsm/controls/OrbitControls.js'
 import { Rhino3dmLoader } from 'https://cdn.jsdelivr.net/npm/three@0.126.0/examples/jsm/loaders/3DMLoader.js'
@@ -23,16 +21,6 @@ const data = {
   inputs: getInputs()
 }
 
-// Load 'b_ring.gh' before initiating the 3D model
-loadDefinition()
-
-async function loadDefinition() {
-  const response = await fetch(`solve/${data.definition}`);
-  const definition = await response.text();
-  data.definition = definition;
-  compute();
-}
-
 // globals
 // test
 let rhino, doc
@@ -41,7 +29,7 @@ rhino3dm().then(async m => {
     rhino = m
  
     init()
- 
+    compute()
 })
 
 const downloadButton = document.getElementById("downloadButton")
