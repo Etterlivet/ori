@@ -20,7 +20,7 @@ const data = {
   definition: 'b_ring.gh',
   inputs: getInputs()
 }
-compute()
+
 
 // globals
 // test
@@ -30,6 +30,7 @@ rhino3dm().then(async m => {
     rhino = m
  
     init()
+    compute()
   
 })
 
