@@ -53,21 +53,23 @@ downloadButton.onclick = download
 // get <input> elements from html and set onchange handlers
 const inputs = getInputs();
 for (const input of Object.values(inputs)) {
-  input.onchange = async () => {
-    // get current input values
-    const currentInputs = getInputs();
+  if (input instanceof HTMLInputElement) {
+    input.onchange = async () => {
+      // get current input values
+      const currentInputs = getInputs();
 
-    // construct filename from input values
-    const filename = `${currentInputs.input1}_${currentInputs.input2}.gh`;
+      // construct filename from input values
+      const filename = `${currentInputs.input1}_${currentInputs.input2}.gh`;
 
-    // load file from server
-    const response = await fetch(`ori/solve/${filename}`);
-    const definition = await response.text();
+      // load file from server
+      const response = await fetch(`ori/solve/${filename}`);
+      const definition = await response.text();
 
-    // update 'data' object and recompute
-    data.definition = definition;
-    data.inputs = currentInputs;
-    compute();
+      // update 'data' object and recompute
+      data.definition = definition;
+      data.inputs = currentInputs;
+      compute();
+    }
   }
 }
 
@@ -277,6 +279,10 @@ function collectResults(responseJson) {
 /**
  * Attempt to decode data tree item to rhino geometry
  */
+
+
+
+
 function decodeItem(item) {
   const data = JSON.parse(item.data)
   if (item.type === 'System.String') {
