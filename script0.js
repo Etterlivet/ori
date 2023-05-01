@@ -54,16 +54,36 @@ let rhino, doc
 
 rhino3dm().then(async m => {
     rhino = m
-    
-  
-   
-    
+ 
     init()
     compute()
 })
 
 const downloadButton = document.getElementById("downloadButton")
 downloadButton.onclick = download
+
+
+// get <input> elements from html and set onchange handlers
+const inputs = getInputs();
+for (const input of Object.values(inputs)) {
+  input.onchange = async () => {
+    // get current input values
+    const currentInputs = getInputs();
+
+    // construct filename from input values
+    const filename = `${currentInputs.input1}_${currentInputs.input2}.gh`;
+
+    // load file from server
+    const response = await fetch(`solve/${filename}`);
+    const definition = await response.text();
+
+    // update 'data' object and recompute
+    data.definition = definition;
+    data.inputs = currentInputs;
+    compute();
+  }
+}
+
 
   /////////////////////////////////////////////////////////////////////////////
  //                            HELPER  FUNCTIONS                            //
@@ -171,7 +191,7 @@ async function compute() {
   try {
     const inputId = Object.keys(data.inputs).sort().join('-');
     // search for the JSON response file in the "original/solve" directory
-    const response = await fetch(`solve/${data.definition.split('.')[0]}-${inputId}.gh`);
+    const response = await fetch(`solve/${inputValues}.gh`);
     
  
 
