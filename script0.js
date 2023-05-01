@@ -16,8 +16,11 @@ const loader = new Rhino3dmLoader()
 loader.setLibraryPath( 'https://cdn.jsdelivr.net/npm/rhino3dm@0.15.0-beta/' )
 
 // initialise 'data' object that will be used by compute()
+const response = await fetch('solve/b_ring.gh')
+const definition = await response.text()
+
 const data = {
-  definition: 'b_ring.gh',
+  definition,
   inputs: getInputs()
 }
 
