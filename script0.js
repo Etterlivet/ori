@@ -6,14 +6,6 @@ import { Rhino3dmLoader } from 'https://cdn.jsdelivr.net/npm/three@0.126.0/examp
 import rhino3dm from 'https://cdn.jsdelivr.net/npm/rhino3dm@0.15.0-beta/rhino3dm.module.js'
 import { HDRCubeTextureLoader } from 'https://cdn.jsdelivr.net/npm/three@0.124.0/examples/jsm/loaders/HDRCubeTextureLoader.js'
 
-
-//import * as THREE from './three.module.js'
-//import { OrbitControls } from './OrbitControls.js'
-//import { Rhino3dmLoader } from './3DMLoader.js'
-//import rhino3dm from './rhino3dm.module.js'
-//import { HDRCubeTextureLoader } from './HDRCubeTextureLoader.js'
-
-
 let material = new THREE.MeshStandardMaterial( {
   //color: 0xffffff,
   color: 0xFF8C17,
@@ -21,23 +13,6 @@ let material = new THREE.MeshStandardMaterial( {
   roughness: 0.0
 } );
 
-// set up loader for converting the results to threejs
-//const tl = new THREE.TextureLoader()
-//    tl.setPath('materials/')
-//    let material = new THREE.MeshPhysicalMaterial()
-//    //material.map          = tl.load('streaked-metal1_base.png')
-//    material.aoMmap       = tl.load('streaked-metal1_ao.png')
-//    material.normalMap    = tl.load('streaked-metal1_normal.png')
-//    material.metalnessMap = tl.load('streaked-metal1_metallic.png')
- //   material.metalness = 1.0
-//    material.roughness = 1.0
-//    material.color.set(0xffcc88)
-
-//const material = new THREE.MeshPhongMaterial( {
-  //       color: 0xffffff,
-  //       metalness: 0.4,
-  //       roughness: 0.0
-  //   } )
 
 const loader = new Rhino3dmLoader()
 loader.setLibraryPath( 'https://cdn.jsdelivr.net/npm/rhino3dm@0.15.0-beta/' )
@@ -48,6 +23,16 @@ const data = {
   inputs: getInputs()
 }
 
+// Load 'b_ring.gh' before initiating the 3D model
+loadDefinition()
+
+async function loadDefinition() {
+  const response = await fetch(`solve/${data.definition}`);
+  const definition = await response.text();
+  data.definition = definition;
+  compute();
+}
+
 // globals
 // test
 let rhino, doc
@@ -56,17 +41,13 @@ rhino3dm().then(async m => {
     rhino = m
  
     init()
-    compute()
+ 
 })
 
 const downloadButton = document.getElementById("downloadButton")
 downloadButton.onclick = download
 
-// compute for the initial 'data' object
-function compute() {
-  RhinoCompute.computeFetch( data ).then( onComputeResponse )
-}
-
+ 
 
 // get <input> elements from html and set onchange handlers
 const inputs = getInputs();
