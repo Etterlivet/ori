@@ -12,8 +12,6 @@ let material = new THREE.MeshStandardMaterial( {
 } );
 
 
-const loader = new Rhino3dmLoader();
-loader.setLibraryPath('https://cdn.jsdelivr.net/npm/rhino3dm@0.15.0-beta/');
 
 const initialFile = 'solve/b_ring.gh';
 const data = {
