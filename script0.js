@@ -62,6 +62,11 @@ rhino3dm().then(async m => {
 const downloadButton = document.getElementById("downloadButton")
 downloadButton.onclick = download
 
+// compute for the initial 'data' object
+function compute() {
+  RhinoCompute.computeFetch( data ).then( onComputeResponse )
+}
+
 
 // get <input> elements from html and set onchange handlers
 const inputs = getInputs();
