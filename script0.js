@@ -171,7 +171,7 @@ async function compute() {
   try {
     const inputId = Object.keys(data.inputs).sort().join('-');
     // search for the JSON response file in the "original/solve" directory
-    const response = await fetch(`original/solve/${data.definition.split('.')[0]}-${inputId}.gh`);
+    const response = await fetch(`ori/solve/${data.definition.split('.')[0]}-${inputId}.gh`);
     
  
 
