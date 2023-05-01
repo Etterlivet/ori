@@ -187,7 +187,7 @@ async function compute() {
       // if the file was not found, display an error message
       console.error('Could not load file: ' + filename);
     }
- collectResults(responseJson)
+ 
   } catch (error) {
     // if there was an error fetching or parsing the file, display an error message
     console.error('Error loading file: ' + filename + '\n' + error.message);
