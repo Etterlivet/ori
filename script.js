@@ -15,7 +15,8 @@ import { HDRCubeTextureLoader } from 'https://cdn.jsdelivr.net/npm/three@0.124.0
 
 
 let material = new THREE.MeshStandardMaterial( {
-  color: 0xffffff,
+  //color: 0xffffff,
+  color: 0xFF8C17,
   metalness: 1.0,
   roughness: 0.0
 } );
