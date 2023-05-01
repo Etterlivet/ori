@@ -12,10 +12,13 @@ let material = new THREE.MeshStandardMaterial( {
 } );
 
 
-const loader = new Rhino3dmLoader()
-loader.setLibraryPath( 'https://cdn.jsdelivr.net/npm/rhino3dm@0.15.0-beta/' )
+const loader = new Rhino3dmLoader();
+loader.setLibraryPath('https://cdn.jsdelivr.net/npm/rhino3dm@0.15.0-beta/');
 
-loader.load('solve/b_ring.gh', function ( definition ) {
+const initialFile = 'solve/b_ring.gh'; // set the initial file here
+
+// load the initial file
+loader.load(initialFile, function (definition) {
   if (definition) {
     data.definition = definition;
     compute();
@@ -23,13 +26,13 @@ loader.load('solve/b_ring.gh', function ( definition ) {
 });
 
 // initialise 'data' object that will be used by compute()
-const response = await fetch('solve/b_ring.gh')
-const definition = await response.text()
+const response = await fetch(initialFile);
+const definition = await response.text();
 
 const data = {
   definition,
   inputs: getInputs()
-}
+};
 
 
 // globals
@@ -37,13 +40,20 @@ const data = {
 let rhino, doc
 
 rhino3dm().then(async m => {
-    rhino = m
- 
-  
-    compute()
-    init()
-  
-})
+  rhino = m;
+  const b_ring_response = await fetch(initialFile); // use initialFile here as well
+  const b_ring_definition = await b_ring_response.text();
+  const b_ring_data = {
+    definition: b_ring_definition,
+    inputs: {}
+  };
+  data.definition = b_ring_definition; // update data with the initial file definition
+  data.inputs = getInputs(); // update data with initial inputs
+  compute();
+  init();
+});
+
+
 
 const downloadButton = document.getElementById("downloadButton")
 downloadButton.onclick = download
