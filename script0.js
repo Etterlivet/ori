@@ -48,7 +48,7 @@ for (const input of Object.values(inputs)) {
     const filename = `${currentInputs.input1}_${currentInputs.input2}.gh`;
 
     // load file from server
-    const response = await fetch(`solve/${filename}`);
+    const response = await fetch(`ori/solve/${filename}`);
     const definition = await response.text();
 
     // update 'data' object and recompute
@@ -164,7 +164,7 @@ async function compute() {
   const filename = Object.values(inputs).join('_') + '.gh';
 
   // construct the URL for the GET request to load the response file
-  const url = new URL(`solve/${filename}`, window.location.origin);
+  const url = new URL(`ori/solve/${filename}`, window.location.origin);
 
   try {
     // try to fetch the file from the solve folder
