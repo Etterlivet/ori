@@ -16,8 +16,10 @@ const loader = new Rhino3dmLoader()
 loader.setLibraryPath( 'https://cdn.jsdelivr.net/npm/rhino3dm@0.15.0-beta/' )
 
 loader.load('solve/b_ring.gh', function ( definition ) {
-  data.definition = definition;
-  compute();
+  if (definition) {
+    data.definition = definition;
+    compute();
+  }
 });
 
 // initialise 'data' object that will be used by compute()
@@ -37,8 +39,9 @@ let rhino, doc
 rhino3dm().then(async m => {
     rhino = m
  
-    init()
+  
     compute()
+    init()
   
 })
 
