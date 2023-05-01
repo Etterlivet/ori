@@ -43,7 +43,7 @@ loader.setLibraryPath( 'https://cdn.jsdelivr.net/npm/rhino3dm@0.15.0-beta/' )
 
 // initialise 'data' object that will be used by compute()
 const data = {
-  definition: 'b.gh',
+  definition: 'b_ring.gh',
   inputs: getInputs()
 }
 
