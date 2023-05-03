@@ -133,10 +133,16 @@ function init() {
     scene.background = new THREE.Color(1, 1, 1);
 
    // store camera position
-    if (camera && camera.userData.position) {
-        camera.position.copy(camera.userData.position);
-    }
+  
 
+if (camera && camera.userData.position) {
+    camera.position.copy(camera.userData.position);
+    cameraPosition = camera.userData.position.clone();
+    console.log('Camera position:', cameraPosition);
+}
+	
+	
+	
     camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 1, 1000);
 
  
