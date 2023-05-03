@@ -88,7 +88,7 @@ for (const input of Object.values(inputs)) {
       //// in the onchange event handler for the input elements, add the following code to set the position of the new model to the last loaded model's position
         const newModel = scene.children[0].clone();
         newModel.position.copy(lastModelPosition);
-      
+        camera.position.copy(lastModelPosition);
         scene.remove(scene.children[0]);
         scene.add(newModel);   
 	    
