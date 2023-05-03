@@ -115,7 +115,9 @@ function getInputs() {
 
 // more globals
 let scene, camera, renderer, controls
-let cameraPosition = new THREE.Vector3(1, -1, 1); // new variable to store camera position 
+
+//let cameraPosition = new THREE.Vector3(1, -1, 1); // new variable to store camera position 
+let cameraPosition = new THREE.Vector3(0, 0, 5);
 
 
 // function to store current camera position before loading a new model
