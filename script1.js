@@ -31,7 +31,7 @@ loader.load(initialFile, function (definition) {
 
 // globals
 // test
-let rhino, doc
+let rhino, doc, cameraPosition // declare cameraPosition variable
 
 rhino3dm().then(async m => {
   rhino = m;
@@ -46,6 +46,9 @@ rhino3dm().then(async m => {
   compute();
   init();
 });
+
+
+
 
 
 
@@ -121,13 +124,21 @@ function storeCameraPosition() {
     return currentCameraPosition;
 }
 
-// update the code that loads new models to use storeCameraPosition() and cameraPosition variable
+
+// function to load new model and inherit previous camera position
 function loadNewModel(modelPath) {
     const currentCameraPosition = storeCameraPosition(); // store current camera position
-    // load new model code here
-    cameraPosition.copy(currentCameraPosition); // update camera position with stored position
+    loader.load(modelPath, function (definition) {
+        if (definition) {
+            data.definition = definition;
+            data.inputs = getInputs();
+            compute();
+            cameraPosition.copy(currentCameraPosition); // update camera position with stored position
+            camera.position.copy(cameraPosition);
+        }
+    });
 }
-
+ 
 
 
 /**
