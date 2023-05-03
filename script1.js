@@ -61,8 +61,7 @@ downloadButton.onclick = download
 
  
 
-// get <input> elements from html and set 
-handlers
+// get <input> elements from html and set handlers
 const inputs = getInputs();
 for (const input of Object.values(inputs)) {
   if (input instanceof HTMLInputElement) {
