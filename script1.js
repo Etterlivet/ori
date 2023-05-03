@@ -112,49 +112,50 @@ function getInputs() {
 
 // more globals
 let scene, camera, renderer, controls
+let cameraPosition = new THREE.Vector3(1, -1, 1); // new variable to store camera position 
+
+
+// function to store current camera position before loading a new model
+function storeCameraPosition() {
+    const currentCameraPosition = camera.position.clone();
+    return currentCameraPosition;
+}
+
+// update the code that loads new models to use storeCameraPosition() and cameraPosition variable
+function loadNewModel(modelPath) {
+    const currentCameraPosition = storeCameraPosition(); // store current camera position
+    // load new model code here
+    cameraPosition.copy(currentCameraPosition); // update camera position with stored position
+}
+
+
 
 /**
  * Sets up the scene, camera, renderer, lights and controls and starts the animation
  */
-
-
-let cameraPosition;
-
- 
-
-
 function init() {
-	
-  // Rhino models are z-up, so set this as the default
+
+    // Rhino models are z-up, so set this as the default
     THREE.Object3D.DefaultUp = new THREE.Vector3( 0, 0, 1 );
 
     // create a scene and a camera
-    scene = new THREE.Scene();
-    scene.background = new THREE.Color(1, 1, 1);
-
-   // store camera position
+    scene = new THREE.Scene()
+    scene.background = new THREE.Color(1, 1, 1)
+    camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 1, 1000)
   
+    camera.position.copy(cameraPosition); // using cameraPosition variable
+    
+    //very light grey for background, like rhino
 
-if (camera && camera.userData.position) {
-    camera.position.copy(camera.userData.position);
-    cameraPosition = camera.userData.position.clone();
-    console.log('Camera position:', cameraPosition);
-}
-	
-	
-	
-    camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 1, 1000);
-
- 
+    //scene.background = new THREE.Color('whitesmoke')
 
     // create the renderer and add it to the html
-    renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer = new THREE.WebGLRenderer({ antialias: true })
     renderer.physicallyCorrectLights = true;
-    renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.setPixelRatio( window.devicePixelRatio );
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    document.body.appendChild(renderer.domElement);
-	
+		renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.setPixelRatio( window.devicePixelRatio )
+    renderer.setSize(window.innerWidth, window.innerHeight)
+    document.body.appendChild(renderer.domElement)
 
     let cubeMap
 
@@ -162,9 +163,6 @@ if (camera && camera.userData.position) {
          .setPath( 'assets/' )
          .setDataType( THREE.UnsignedByteType )
          .load( [ 'px.hdr', 'nx.hdr', 'py.hdr', 'ny.hdr', 'pz.hdr', 'nz.hdr' ] )
-	
-	////
-	camera.userData.position = camera.position.clone(); // save camera position
 
    //cubeMap = new THREE.CubeTextureLoader()
      //   .setPath('assets/')
@@ -172,7 +170,6 @@ if (camera && camera.userData.position) {
 
     // add some controls to orbit the camera
     controls = new OrbitControls(camera, renderer.domElement)
-    controls.target.set(0, 0, 0);
 
     // add a directional light
     const directionalLight = new THREE.DirectionalLight( 0xffffff )
@@ -190,6 +187,10 @@ if (camera && camera.userData.position) {
 
     animate()
 }
+
+
+
+
 
 /**
  * Call appserver
