@@ -31,7 +31,7 @@ loader.load(initialFile, function (definition) {
 
 // globals
 // test
-let rhino, doc   
+let rhino, doc
 
 rhino3dm().then(async m => {
   rhino = m;
@@ -46,9 +46,6 @@ rhino3dm().then(async m => {
   compute();
   init();
 });
-
-
-
 
 
 
@@ -116,34 +113,6 @@ function getInputs() {
 // more globals
 let scene, camera, renderer, controls
 
-let cameraPosition = new THREE.Vector3(1, -1, 1); // new variable to store camera position 
-camera.fov = 30; // decrease FOV to make object appear smaller
-camera.updateProjectionMatrix(); // update camera projection matrix 
-
-
-// function to store current camera position before loading a new model
-function storeCameraPosition() {
-    const currentCameraPosition = camera.position.clone();
-    return currentCameraPosition;
-}
-
-
-// function to load new model and inherit previous camera position
-function loadNewModel(modelPath) {
-    const currentCameraPosition = storeCameraPosition(); // store current camera position
-    loader.load(modelPath, function (definition) {
-        if (definition) {
-            data.definition = definition;
-            data.inputs = getInputs();
-            compute();
-            cameraPosition.copy(currentCameraPosition); // update camera position with stored position
-            camera.position.copy(cameraPosition);
-        }
-    });
-}
- 
-
-
 /**
  * Sets up the scene, camera, renderer, lights and controls and starts the animation
  */
@@ -156,8 +125,7 @@ function init() {
     scene = new THREE.Scene()
     scene.background = new THREE.Color(1, 1, 1)
     camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 1, 1000)
-  
-    camera.position.copy(cameraPosition); // using cameraPosition variable
+    camera.position.set(1, -1, 1) // like perspective view
     
     //very light grey for background, like rhino
 
@@ -201,10 +169,6 @@ function init() {
 
     animate()
 }
-
-
-
-
 
 /**
  * Call appserver
@@ -385,38 +349,39 @@ function onWindowResize() {
 /**
  * Helper function that behaves like rhino's "zoom to selection", but for three.js!
  */
-function zoomCameraToSelection( camera, controls, selection, fitOffset = 1.2 ) {
-  
+
+
+function zoomCameraToSelection(camera, controls, selection) {
   const box = new THREE.Box3();
-  
-  for( const object of selection ) {
-    if (object.isLight) continue
-    box.expandByObject( object );
+  for (let i = 0; i < selection.length; i++) {
+    const obj = selection[i];
+    if (obj.geometry !== undefined) {
+      obj.updateMatrixWorld();
+      box.expandByObject(obj);
+    }
   }
-  
-  const size = box.getSize( new THREE.Vector3() );
-  const center = box.getCenter( new THREE.Vector3() );
-  
-  const maxSize = Math.max( size.x, size.y, size.z );
-  const fitHeightDistance = maxSize / ( 2 * Math.atan( Math.PI * camera.fov / 360 ) );
+  const size = box.getSize(new THREE.Vector3());
+  const center = box.getCenter(new THREE.Vector3());
+
+  const maxSize = Math.max(size.x, size.y, size.z);
+  const fitHeightDistance = maxSize / (2 * Math.atan((Math.PI * camera.fov) / 360));
   const fitWidthDistance = fitHeightDistance / camera.aspect;
-  const distance = fitOffset * Math.max( fitHeightDistance, fitWidthDistance );
-  
-  const direction = controls.target.clone()
-    .sub( camera.position )
-    .normalize()
-    .multiplyScalar( distance );
+  const distance = 1.2 * Math.max(fitHeightDistance, fitWidthDistance);
+
+  const direction = controls.target.clone().sub(camera.position).normalize().multiplyScalar(-distance);
   controls.maxDistance = distance * 10;
-  controls.target.copy( center );
-  
+  controls.target.copy(center);
+
   camera.near = distance / 100;
   camera.far = distance * 100;
   camera.updateProjectionMatrix();
-  camera.position.copy( controls.target ).sub(direction);
-  
+
+  camera.position.copy(controls.target).add(direction);
+
   controls.update();
-  
 }
+
+
 
 /**
  * This function is called when the download button is clicked
