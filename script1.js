@@ -11,11 +11,9 @@ let material = new THREE.MeshStandardMaterial( {
   roughness: 0.0
 } );
 
+let savedCameraPosition = new THREE.Vector3(1, -1, 1);
+let savedControlsPosition = new THREE.Vector3(0, 0, 0);
 
-// add something here
-let lastModelPosition = new THREE.Vector3(0, 0, 0);
- 
- 
 
 const initialFile = 'solve/b_ring.gh';
 const data = {
@@ -30,19 +28,18 @@ loader.load(initialFile, function (definition) {
     data.definition = definition;
     data.inputs = getInputs();
     compute();
-	  
-//// update lastModelPosition with the position of the newly loaded model
-   lastModelPosition.copy(scene.children[0].position);
-
-//// set camera position to match the position of the previously loaded model
-    camera.position.copy(lastModelPosition);
-
-//// add the new model to the scene
-    scene.add(scene.children[0].clone());	  
- 
-    
+	   // set camera and controls positions to saved positions
+    camera.position.copy(savedCameraPosition);
+    controls.target.copy(savedControlsPosition);
   }
 });
+
+////newly
+controls.addEventListener('change', () => {
+  savedCameraPosition.copy(camera.position);
+  savedControlsPosition.copy(controls.target);
+});
+
 
 // globals
 // test
@@ -69,7 +66,7 @@ downloadButton.onclick = download
 
  
 
-// get <input> elements from html and set handlers
+// get <input> elements from html and set onchange handlers
 const inputs = getInputs();
 for (const input of Object.values(inputs)) {
   if (input instanceof HTMLInputElement) {
@@ -88,25 +85,10 @@ for (const input of Object.values(inputs)) {
       data.definition = definition;
       data.inputs = currentInputs;
       compute();
-
 	    
-      //// in the onchange event handler for the input elements, add the following code to set the position of the new model to the last loaded model's position
-       // const newModel = scene.children[0].clone();
-       // newModel.position.copy(lastModelPosition);
-      //  camera.position.copy(lastModelPosition);
-      //  scene.remove(scene.children[0]);
-      //  scene.add(newModel);   
-	
-      //// set camera position to match the position of the previously loaded model
-      camera.position.copy(lastModelPosition);
-
-      //// add the new model to the scene
-      scene.add(scene.children[0].clone());
-
-      //// update lastModelPosition with the position of the newly loaded model
-      lastModelPosition.copy(scene.children[0].position);
-	   
-       
+	    // set camera and controls positions to saved positions
+camera.position.copy(savedCameraPosition);
+controls.target.copy(savedControlsPosition);
     }
   }
 }
@@ -147,7 +129,6 @@ function getInputs() {
 // more globals
 let scene, camera, renderer, controls
 
-
 /**
  * Sets up the scene, camera, renderer, lights and controls and starts the animation
  */
@@ -162,6 +143,11 @@ function init() {
     camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 1, 1000)
     camera.position.set(1, -1, 1) // like perspective view
     
+	
+camera.position.copy(savedCameraPosition);
+controls.target.copy(savedControlsPosition);
+	
+	
     //very light grey for background, like rhino
 
     //scene.background = new THREE.Color('whitesmoke')
@@ -173,6 +159,8 @@ function init() {
     renderer.setPixelRatio( window.devicePixelRatio )
     renderer.setSize(window.innerWidth, window.innerHeight)
     document.body.appendChild(renderer.domElement)
+	
+
 
     let cubeMap
 
