@@ -86,7 +86,8 @@ for (const input of Object.values(inputs)) {
       const newModel = scene.children[0].clone();
       newModel.position.copy(lastModelPosition);
       scene.remove(scene.children[0]);
-      scene.add(newModel);    
+      scene.add(newModel);   
+      newModel.scale.set(1, 1, 1);
 	    
     }
   }
