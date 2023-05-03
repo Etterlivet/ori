@@ -11,7 +11,6 @@ let material = new THREE.MeshStandardMaterial( {
   roughness: 0.0
 } );
 
- 
 
 
 const initialFile = 'solve/b_ring.gh';
@@ -27,20 +26,12 @@ loader.load(initialFile, function (definition) {
     data.definition = definition;
     data.inputs = getInputs();
     compute();
-	  
- 
   }
 });
-
-
-
 
 // globals
 // test
 let rhino, doc
-
-let savedCameraPosition, savedControlsState; // added
-
 
 rhino3dm().then(async m => {
   rhino = m;
@@ -73,10 +64,6 @@ for (const input of Object.values(inputs)) {
 
       // construct filename from input values
       const filename = `${currentInputs.input1}_${currentInputs.input2}.gh`;
-	    
-	       //// save camera position and controls state
-      savedCameraPosition = camera.position.clone();
-      savedControlsState = controls.getState();
 
       // load file from server
       const response = await fetch(`ori/solve/${filename}`);
@@ -86,8 +73,6 @@ for (const input of Object.values(inputs)) {
       data.definition = definition;
       data.inputs = currentInputs;
       compute();
-	    
- 
     }
   }
 }
@@ -131,38 +116,44 @@ let scene, camera, renderer, controls
 /**
  * Sets up the scene, camera, renderer, lights and controls and starts the animation
  */
-function init() {
 
-    // Rhino models are z-up, so set this as the default
+
+let cameraPosition;
+
+ 
+
+
+function init() {
+	
+  // Rhino models are z-up, so set this as the default
     THREE.Object3D.DefaultUp = new THREE.Vector3( 0, 0, 1 );
 
     // create a scene and a camera
-    scene = new THREE.Scene()
-    scene.background = new THREE.Color(1, 1, 1)
-    camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 1, 1000)
-    camera.position.set(1, -1, 1) // like perspective view
-    
-	
-    //very light grey for background, like rhino
+    scene = new THREE.Scene();
+    scene.background = new THREE.Color(1, 1, 1);
 
-    //scene.background = new THREE.Color('whitesmoke')
+    // store camera position
+    if (camera) {
+        cameraPosition = camera.position.clone();
+    }
+
+    camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 1, 1000);
+
+    // restore camera position if available
+    if (cameraPosition) {
+        camera.position.copy(cameraPosition);
+    } else {
+        camera.position.set(1, -1, 1);
+    }
 
     // create the renderer and add it to the html
-    renderer = new THREE.WebGLRenderer({ antialias: true })
+    renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.physicallyCorrectLights = true;
-		renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.setPixelRatio( window.devicePixelRatio )
-    renderer.setSize(window.innerWidth, window.innerHeight)
-    document.body.appendChild(renderer.domElement)
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.setPixelRatio( window.devicePixelRatio );
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    document.body.appendChild(renderer.domElement);
 	
-///////////	
-	  camera.position.copy(savedCameraPosition);
-  controls = new OrbitControls(camera, renderer.domElement);
-  controls.target.set(0, 0, 0);
-  controls.update();
-  controls.setState(savedControlsState);
-	
-
 
     let cubeMap
 
