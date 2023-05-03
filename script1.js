@@ -276,7 +276,7 @@ function collectResults(responseJson) {
         downloadButton.disabled = false
 
         // zoom to extents
-        zoomCameraToSelection(camera, controls, scene.children)
+        //zoomCameraToSelection(camera, controls, scene.children)
     })
 }
 
@@ -349,37 +349,7 @@ function onWindowResize() {
 /**
  * Helper function that behaves like rhino's "zoom to selection", but for three.js!
  */
-
-
-function zoomCameraToSelection(camera, controls, selection) {
-  const box = new THREE.Box3();
-  for (let i = 0; i < selection.length; i++) {
-    const obj = selection[i];
-    if (obj.geometry !== undefined) {
-      obj.updateMatrixWorld();
-      box.expandByObject(obj);
-    }
-  }
-  const size = box.getSize(new THREE.Vector3());
-  const center = box.getCenter(new THREE.Vector3());
-
-  const maxSize = Math.max(size.x, size.y, size.z);
-  const fitHeightDistance = maxSize / (2 * Math.atan((Math.PI * camera.fov) / 360));
-  const fitWidthDistance = fitHeightDistance / camera.aspect;
-  const distance = 1.2 * Math.max(fitHeightDistance, fitWidthDistance);
-
-  const direction = controls.target.clone().sub(camera.position).normalize().multiplyScalar(-distance);
-  controls.maxDistance = distance * 10;
-  controls.target.copy(center);
-
-  camera.near = distance / 100;
-  camera.far = distance * 100;
-  camera.updateProjectionMatrix();
-
-  camera.position.copy(controls.target).add(direction);
-
-  controls.update();
-}
+ 
 
 
 
