@@ -33,7 +33,12 @@ loader.load(initialFile, function (definition) {
 	  
 //// update lastModelPosition with the position of the newly loaded model
    lastModelPosition.copy(scene.children[0].position);
-	  
+
+//// set camera position to match the position of the previously loaded model
+    camera.position.copy(lastModelPosition);
+
+//// add the new model to the scene
+    scene.add(scene.children[0].clone());	  
  
     
   }
@@ -86,12 +91,20 @@ for (const input of Object.values(inputs)) {
 
 	    
       //// in the onchange event handler for the input elements, add the following code to set the position of the new model to the last loaded model's position
-        const newModel = scene.children[0].clone();
-        newModel.position.copy(lastModelPosition);
-        camera.position.copy(lastModelPosition);
-        scene.remove(scene.children[0]);
-        scene.add(newModel);   
-	    
+       // const newModel = scene.children[0].clone();
+       // newModel.position.copy(lastModelPosition);
+      //  camera.position.copy(lastModelPosition);
+      //  scene.remove(scene.children[0]);
+      //  scene.add(newModel);   
+	
+      //// set camera position to match the position of the previously loaded model
+      camera.position.copy(lastModelPosition);
+
+      //// add the new model to the scene
+      scene.add(scene.children[0].clone());
+
+      //// update lastModelPosition with the position of the newly loaded model
+      lastModelPosition.copy(scene.children[0].position);
 	   
        
     }
