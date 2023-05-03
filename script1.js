@@ -168,6 +168,7 @@ function init() {
 
     // add some controls to orbit the camera
     controls = new OrbitControls(camera, renderer.domElement)
+    controls.target.set(0, 0, 0);
 
     // add a directional light
     const directionalLight = new THREE.DirectionalLight( 0xffffff )
