@@ -11,8 +11,7 @@ let material = new THREE.MeshStandardMaterial( {
   roughness: 0.0
 } );
 
-let savedCameraPosition = new THREE.Vector3(1, -1, 1);
-let savedControlsPosition = new THREE.Vector3(0, 0, 0);
+ 
 
 
 const initialFile = 'solve/b_ring.gh';
@@ -28,22 +27,20 @@ loader.load(initialFile, function (definition) {
     data.definition = definition;
     data.inputs = getInputs();
     compute();
-	   // set camera and controls positions to saved positions
-    camera.position.copy(savedCameraPosition);
-    controls.target.copy(savedControlsPosition);
+	  
+ 
   }
 });
 
-////newly
-controls.addEventListener('change', () => {
-  savedCameraPosition.copy(camera.position);
-  savedControlsPosition.copy(controls.target);
-});
+
 
 
 // globals
 // test
 let rhino, doc
+
+let savedCameraPosition, savedControlsState; // added
+
 
 rhino3dm().then(async m => {
   rhino = m;
@@ -76,6 +73,10 @@ for (const input of Object.values(inputs)) {
 
       // construct filename from input values
       const filename = `${currentInputs.input1}_${currentInputs.input2}.gh`;
+	    
+	       //// save camera position and controls state
+      savedCameraPosition = camera.position.clone();
+      savedControlsState = controls.getState();
 
       // load file from server
       const response = await fetch(`ori/solve/${filename}`);
@@ -86,9 +87,7 @@ for (const input of Object.values(inputs)) {
       data.inputs = currentInputs;
       compute();
 	    
-	    // set camera and controls positions to saved positions
-camera.position.copy(savedCameraPosition);
-controls.target.copy(savedControlsPosition);
+ 
     }
   }
 }
@@ -144,10 +143,6 @@ function init() {
     camera.position.set(1, -1, 1) // like perspective view
     
 	
-camera.position.copy(savedCameraPosition);
-controls.target.copy(savedControlsPosition);
-	
-	
     //very light grey for background, like rhino
 
     //scene.background = new THREE.Color('whitesmoke')
@@ -159,6 +154,13 @@ controls.target.copy(savedControlsPosition);
     renderer.setPixelRatio( window.devicePixelRatio )
     renderer.setSize(window.innerWidth, window.innerHeight)
     document.body.appendChild(renderer.domElement)
+	
+///////////	
+	  camera.position.copy(savedCameraPosition);
+  controls = new OrbitControls(camera, renderer.domElement);
+  controls.target.set(0, 0, 0);
+  controls.update();
+  controls.setState(savedControlsState);
 	
 
 
