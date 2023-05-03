@@ -31,7 +31,7 @@ loader.load(initialFile, function (definition) {
 
 // globals
 // test
-let rhino, doc, cameraPosition // declare cameraPosition variable
+let rhino, doc   
 
 rhino3dm().then(async m => {
   rhino = m;
