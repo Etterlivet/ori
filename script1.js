@@ -14,6 +14,7 @@ let material = new THREE.MeshStandardMaterial( {
 
 // add something here
 let lastModelPosition = new THREE.Vector3(0, 0, 0);
+let lastModel = null;
  
 
 const initialFile = 'solve/b_ring.gh';
@@ -31,7 +32,12 @@ loader.load(initialFile, function (definition) {
     compute();
 	  
 //// update lastModelPosition with the position of the newly loaded model
-    lastModelPosition.copy(scene.children[0].position);
+  // lastModelPosition.copy(scene.children[0].position);
+	  
+	  lastModel = scene.children[0].clone();
+    lastModelPosition.copy(lastModel.position);
+
+    scene.add(lastModel);
     
   }
 });
@@ -83,11 +89,21 @@ for (const input of Object.values(inputs)) {
 
 	    
       //// in the onchange event handler for the input elements, add the following code to set the position of the new model to the last loaded model's position
-      const newModel = scene.children[0].clone();
-      newModel.position.copy(lastModelPosition);
+       //// const newModel = scene.children[0].clone();
+       //// newModel.position.copy(lastModelPosition);
       
-      scene.remove(scene.children[0]);
-      scene.add(newModel);   
+      ////  scene.remove(scene.children[0]);
+      ////  scene.add(newModel);   
+	    
+	    
+	const newModel = lastModel.clone();
+      newModel.position.copy(lastModelPosition);
+
+      scene.remove(lastModel);
+      scene.add(newModel);
+
+      lastModel = newModel;
+      lastModelPosition.copy(lastModel.position);    
       
 	    
     }
