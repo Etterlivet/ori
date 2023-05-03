@@ -116,8 +116,9 @@ function getInputs() {
 // more globals
 let scene, camera, renderer, controls
 
-//let cameraPosition = new THREE.Vector3(1, -1, 1); // new variable to store camera position 
-let cameraPosition = new THREE.Vector3(0, 0, 5);
+let cameraPosition = new THREE.Vector3(1, -1, 1); // new variable to store camera position 
+camera.fov = 30; // decrease FOV to make object appear smaller
+camera.updateProjectionMatrix(); // update camera projection matrix 
 
 
 // function to store current camera position before loading a new model
