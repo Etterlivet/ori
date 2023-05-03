@@ -132,19 +132,14 @@ function init() {
     scene = new THREE.Scene();
     scene.background = new THREE.Color(1, 1, 1);
 
-    // store camera position
-    if (camera) {
-        cameraPosition = camera.position.clone();
+   // store camera position
+    if (camera && camera.userData.position) {
+        camera.position.copy(camera.userData.position);
     }
 
     camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 1, 1000);
 
-    // restore camera position if available
-    if (cameraPosition) {
-        camera.position.copy(cameraPosition);
-    } else {
-        camera.position.set(1, -1, 1);
-    }
+ 
 
     // create the renderer and add it to the html
     renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -161,6 +156,9 @@ function init() {
          .setPath( 'assets/' )
          .setDataType( THREE.UnsignedByteType )
          .load( [ 'px.hdr', 'nx.hdr', 'py.hdr', 'ny.hdr', 'pz.hdr', 'nz.hdr' ] )
+	
+	////
+	camera.userData.position = camera.position.clone(); // save camera position
 
    //cubeMap = new THREE.CubeTextureLoader()
      //   .setPath('assets/')
