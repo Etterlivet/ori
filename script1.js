@@ -11,15 +11,16 @@ let material = new THREE.MeshStandardMaterial( {
   roughness: 0.0
 } );
 
-////
-let initialCameraPosition;
-let hasCameraMoved = false;
+
 
 const initialFile = 'solve/b_ring.gh';
 const data = {
   definition: '',
   inputs: getInputs(),
 };
+
+
+let isFirstModel = true; // Add this flag to keep track of whether it's the first model
 
 const loader = new Rhino3dmLoader();
 loader.setLibraryPath('https://cdn.jsdelivr.net/npm/rhino3dm@0.15.0-beta/');
@@ -28,6 +29,14 @@ loader.load(initialFile, function (definition) {
     data.definition = definition;
     data.inputs = getInputs();
     compute();
+	  
+	   if (isFirstModel) { // Only reset camera position for the first model
+      zoomCameraToSelection(controls, camera, scene, true);
+      isFirstModel = false; // Set flag to false for all subsequent models
+    } else {
+      zoomCameraToSelection(controls, camera, scene, false);
+    }
+	  
   }
 });
 
@@ -75,6 +84,8 @@ for (const input of Object.values(inputs)) {
       data.definition = definition;
       data.inputs = currentInputs;
       compute();
+	    
+     zoomCameraToSelection(controls, camera, scene, false); // Pass false to avoid resetting camera position
     }
   }
 }
@@ -128,8 +139,6 @@ function init() {
     scene.background = new THREE.Color(1, 1, 1)
     camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 1, 1000)
     camera.position.set(1, -1, 1) // like perspective view
-	
-    initialCameraPosition = camera.position.clone();
     
     //very light grey for background, like rhino
 
@@ -338,11 +347,6 @@ function animate() {
   requestAnimationFrame( animate )
   controls.update()
   renderer.render(scene, camera)
-
- if (!hasCameraMoved) {
-  camera.position.copy(initialCameraPosition);
-}
-	
 }
 
 /**
@@ -358,45 +362,39 @@ function onWindowResize() {
 /**
  * Helper function that behaves like rhino's "zoom to selection", but for three.js!
  */
-function zoomCameraToSelection( camera, controls, selection, fitOffset = 1.2 ) {
-  
-  const box = new THREE.Box3();
-  
-  for( const object of selection ) {
-    if (object.isLight) continue
-    box.expandByObject( object );
+function zoomCameraToSelection( controls, camera, selection, reset ) {
+
+  // If reset is true, reset camera position
+  if (reset) {
+    controls.reset();
   }
-  
+
+  const box = new THREE.Box3().setFromObject( selection );
   const size = box.getSize( new THREE.Vector3() );
+
   const center = box.getCenter( new THREE.Vector3() );
-  
+
   const maxSize = Math.max( size.x, size.y, size.z );
   const fitHeightDistance = maxSize / ( 2 * Math.atan( Math.PI * camera.fov / 360 ) );
   const fitWidthDistance = fitHeightDistance / camera.aspect;
-  const distance = fitOffset * Math.max( fitHeightDistance, fitWidthDistance );
-  
+  const distance = 1.2 * Math.max( fitHeightDistance, fitWidthDistance );
+
   const direction = controls.target.clone()
     .sub( camera.position )
     .normalize()
     .multiplyScalar( distance );
+
   controls.maxDistance = distance * 10;
   controls.target.copy( center );
-  
+
   camera.near = distance / 100;
   camera.far = distance * 100;
   camera.updateProjectionMatrix();
+
   camera.position.copy( controls.target ).sub(direction);
-	
-//// add
-if (hasCameraMoved) {
-    camera.position.copy(initialCameraPosition);
-  } else {
-    camera.position.copy( center ).add( direction );
-    hasCameraMoved = true;
-  }
-  
+
   controls.update();
-  
+
 }
 
 /**
