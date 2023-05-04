@@ -338,6 +338,11 @@ function animate() {
   requestAnimationFrame( animate )
   controls.update()
   renderer.render(scene, camera)
+
+ if (!hasCameraMoved) {
+  camera.position.copy(initialCameraPosition);
+}
+	
 }
 
 /**
