@@ -11,7 +11,9 @@ let material = new THREE.MeshStandardMaterial( {
   roughness: 0.0
 } );
 
-
+////
+let initialCameraPosition;
+let hasCameraMoved = false;
 
 const initialFile = 'solve/b_ring.gh';
 const data = {
@@ -126,6 +128,8 @@ function init() {
     scene.background = new THREE.Color(1, 1, 1)
     camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 1, 1000)
     camera.position.set(1, -1, 1) // like perspective view
+	
+    initialCameraPosition = camera.position.clone();
     
     //very light grey for background, like rhino
 
@@ -276,7 +280,7 @@ function collectResults(responseJson) {
         downloadButton.disabled = false
 
         // zoom to extents
-        //zoomCameraToSelection(camera, controls, scene.children)
+        zoomCameraToSelection(camera, controls, scene.children)
     })
 }
 
@@ -349,9 +353,46 @@ function onWindowResize() {
 /**
  * Helper function that behaves like rhino's "zoom to selection", but for three.js!
  */
- 
-
-
+function zoomCameraToSelection( camera, controls, selection, fitOffset = 1.2 ) {
+  
+  const box = new THREE.Box3();
+  
+  for( const object of selection ) {
+    if (object.isLight) continue
+    box.expandByObject( object );
+  }
+  
+  const size = box.getSize( new THREE.Vector3() );
+  const center = box.getCenter( new THREE.Vector3() );
+  
+  const maxSize = Math.max( size.x, size.y, size.z );
+  const fitHeightDistance = maxSize / ( 2 * Math.atan( Math.PI * camera.fov / 360 ) );
+  const fitWidthDistance = fitHeightDistance / camera.aspect;
+  const distance = fitOffset * Math.max( fitHeightDistance, fitWidthDistance );
+  
+  const direction = controls.target.clone()
+    .sub( camera.position )
+    .normalize()
+    .multiplyScalar( distance );
+  controls.maxDistance = distance * 10;
+  controls.target.copy( center );
+  
+  camera.near = distance / 100;
+  camera.far = distance * 100;
+  camera.updateProjectionMatrix();
+  camera.position.copy( controls.target ).sub(direction);
+	
+//// add
+if (hasCameraMoved) {
+    camera.position.copy(initialCameraPosition);
+  } else {
+    camera.position.copy( center ).add( direction );
+    hasCameraMoved = true;
+  }
+  
+  controls.update();
+  
+}
 
 /**
  * This function is called when the download button is clicked
