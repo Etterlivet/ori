@@ -121,22 +121,11 @@ function init() {
     // Rhino models are z-up, so set this as the default
     THREE.Object3D.DefaultUp = new THREE.Vector3( 0, 0, 1 );
 
- let boundingBox = new THREE.Box3();	
-	
     // create a scene and a camera
     scene = new THREE.Scene()
     scene.background = new THREE.Color(1, 1, 1)
     camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 1, 1000)
-   // camera.position.set(1, -1, 1) // like perspective view
-	
-	
-// Remember the last camera position
-  const lastCameraPosition = JSON.parse(localStorage.getItem('cameraPosition'));
-  if (lastCameraPosition) {
-    camera.position.set(lastCameraPosition.x, lastCameraPosition.y, lastCameraPosition.z);
-  } else {
-    camera.position.set(1, -1, 1); // like perspective view
-  }	
+    camera.position.set(1, -1, 1) // like perspective view
     
     //very light grey for background, like rhino
 
@@ -177,17 +166,6 @@ function init() {
 
     // handle changes in the window size
     window.addEventListener( 'resize', onWindowResize, false )
-	
-	
-	controls.addEventListener('change', function () {
-    // Remember the camera position
-    const cameraPosition = {
-      x: camera.position.x,
-      y: camera.position.y,
-      z: camera.position.z,
-    };
-    localStorage.setItem('cameraPosition', JSON.stringify(cameraPosition));
-  });
 
     animate()
 }
@@ -233,6 +211,9 @@ async function compute() {
     // if there was an error fetching or parsing the file, display an error message
     console.error('Error loading file: ' + filename + '\n' + error.message);
   }
+	
+// Update storedZoomLevel to current camera zoom level
+  storedZoomLevel = controls.getZoom();
 }
 
 
@@ -371,33 +352,37 @@ function onWindowResize() {
 /**
  * Helper function that behaves like rhino's "zoom to selection", but for three.js!
  */
-function zoomCameraToSelection( camera, controls, selection, fitOffset = 1.2 ) {
+
+let storedZoomLevel = null; // Declare variable to store zoom level
+
+function zoomCameraToSelection( selection, fitOffset = 1.2 ) {
   
-  cconst box = new THREE.Box3().setFromObject(selection);
-  const size = box.getSize(new THREE.Vector3());
-  const center = box.getCenter(new THREE.Vector3());
+    const box = new THREE.Box3().setFromObject( selection );
+  const size = box.getSize( new THREE.Vector3() );
+  const center = box.getCenter( new THREE.Vector3() );
 
-  const maxSize = Math.max(size.x, size.y, size.z);
-  const fitHeightDistance = maxSize / (2 * Math.atan((Math.PI * camera.fov) / 360));
+  const maxSize = Math.max( size.x, size.y, size.z );
+  const fitHeightDistance = maxSize / ( 2 * Math.atan( Math.PI * camera.fov / 360 ) );
   const fitWidthDistance = fitHeightDistance / camera.aspect;
-  const distance = fitOffset * Math.max(fitHeightDistance, fitWidthDistance);
+  const distance = fitOffset * Math.max( fitHeightDistance, fitWidthDistance );
 
-  // Remember the last zooming position
-  const lastCameraTarget = controls.target.clone();
+  const direction = controls.target.clone()
+    .sub( camera.position )
+    .normalize()
+    .multiplyScalar( distance );
+  controls.maxDistance = distance * 10;
+  controls.target.copy( center );
 
-  // set camera to rotate around center of loaded object
   camera.near = distance / 100;
   camera.far = distance * 100;
   camera.updateProjectionMatrix();
-  camera.position.copy(center);
+  camera.position.copy( controls.target ).sub(direction);
 
-  // pan camera to last zooming position
-  controls.target.copy(lastCameraTarget);
-
-  controls.maxDistance = distance * 10;
-  controls.minDistance = distance / 10;
-  controls.update();
+  // Use stored zoom level if available, otherwise use default zoom level
+  const zoomLevel = storedZoomLevel !== null ? storedZoomLevel : distance;
+  controls.setZoom(zoomLevel);
 }
+
 
 /**
  * This function is called when the download button is clicked
