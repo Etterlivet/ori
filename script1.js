@@ -19,9 +19,6 @@ const data = {
   inputs: getInputs(),
 };
 
-
-let isFirstModel = true; // Add this flag to keep track of whether it's the first model
-
 const loader = new Rhino3dmLoader();
 loader.setLibraryPath('https://cdn.jsdelivr.net/npm/rhino3dm@0.15.0-beta/');
 loader.load(initialFile, function (definition) {
@@ -29,14 +26,6 @@ loader.load(initialFile, function (definition) {
     data.definition = definition;
     data.inputs = getInputs();
     compute();
-	  
-	   if (isFirstModel) { // Only reset camera position for the first model
-      zoomCameraToSelection(controls, camera, scene, true);
-      isFirstModel = false; // Set flag to false for all subsequent models
-    } else {
-      zoomCameraToSelection(controls, camera, scene, false);
-    }
-	  
   }
 });
 
@@ -84,8 +73,6 @@ for (const input of Object.values(inputs)) {
       data.definition = definition;
       data.inputs = currentInputs;
       compute();
-	    
-     zoomCameraToSelection(controls, camera, scene, false); // Pass false to avoid resetting camera position
     }
   }
 }
@@ -362,39 +349,37 @@ function onWindowResize() {
 /**
  * Helper function that behaves like rhino's "zoom to selection", but for three.js!
  */
-function zoomCameraToSelection( controls, camera, selection, reset ) {
-
-  // If reset is true, reset camera position
-  if (reset) {
-    controls.reset();
+function zoomCameraToSelection( camera, controls, selection, fitOffset = 1.2 ) {
+  
+  const box = new THREE.Box3();
+  
+  for( const object of selection ) {
+    if (object.isLight) continue
+    box.expandByObject( object );
   }
-
-  const box = new THREE.Box3().setFromObject( selection );
+  
   const size = box.getSize( new THREE.Vector3() );
-
   const center = box.getCenter( new THREE.Vector3() );
-
+  
   const maxSize = Math.max( size.x, size.y, size.z );
   const fitHeightDistance = maxSize / ( 2 * Math.atan( Math.PI * camera.fov / 360 ) );
   const fitWidthDistance = fitHeightDistance / camera.aspect;
-  const distance = 1.2 * Math.max( fitHeightDistance, fitWidthDistance );
-
+  const distance = fitOffset * Math.max( fitHeightDistance, fitWidthDistance );
+  
   const direction = controls.target.clone()
     .sub( camera.position )
     .normalize()
     .multiplyScalar( distance );
-
   controls.maxDistance = distance * 10;
   controls.target.copy( center );
-
+  
   camera.near = distance / 100;
   camera.far = distance * 100;
   camera.updateProjectionMatrix();
-
   camera.position.copy( controls.target ).sub(direction);
-
+  
   controls.update();
-
+  
 }
 
 /**
