@@ -121,11 +121,22 @@ function init() {
     // Rhino models are z-up, so set this as the default
     THREE.Object3D.DefaultUp = new THREE.Vector3( 0, 0, 1 );
 
+ let boundingBox = new THREE.Box3();	
+	
     // create a scene and a camera
     scene = new THREE.Scene()
     scene.background = new THREE.Color(1, 1, 1)
     camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 1, 1000)
-    camera.position.set(1, -1, 1) // like perspective view
+   // camera.position.set(1, -1, 1) // like perspective view
+	
+	
+// Remember the last camera position
+  const lastCameraPosition = JSON.parse(localStorage.getItem('cameraPosition'));
+  if (lastCameraPosition) {
+    camera.position.set(lastCameraPosition.x, lastCameraPosition.y, lastCameraPosition.z);
+  } else {
+    camera.position.set(1, -1, 1); // like perspective view
+  }	
     
     //very light grey for background, like rhino
 
@@ -166,6 +177,17 @@ function init() {
 
     // handle changes in the window size
     window.addEventListener( 'resize', onWindowResize, false )
+	
+	
+	controls.addEventListener('change', function () {
+    // Remember the camera position
+    const cameraPosition = {
+      x: camera.position.x,
+      y: camera.position.y,
+      z: camera.position.z,
+    };
+    localStorage.setItem('cameraPosition', JSON.stringify(cameraPosition));
+  });
 
     animate()
 }
@@ -351,35 +373,30 @@ function onWindowResize() {
  */
 function zoomCameraToSelection( camera, controls, selection, fitOffset = 1.2 ) {
   
-  const box = new THREE.Box3();
-  
-  for( const object of selection ) {
-    if (object.isLight) continue
-    box.expandByObject( object );
-  }
-  
-  const size = box.getSize( new THREE.Vector3() );
-  const center = box.getCenter( new THREE.Vector3() );
-  
-  const maxSize = Math.max( size.x, size.y, size.z );
-  const fitHeightDistance = maxSize / ( 2 * Math.atan( Math.PI * camera.fov / 360 ) );
+  cconst box = new THREE.Box3().setFromObject(selection);
+  const size = box.getSize(new THREE.Vector3());
+  const center = box.getCenter(new THREE.Vector3());
+
+  const maxSize = Math.max(size.x, size.y, size.z);
+  const fitHeightDistance = maxSize / (2 * Math.atan((Math.PI * camera.fov) / 360));
   const fitWidthDistance = fitHeightDistance / camera.aspect;
-  const distance = fitOffset * Math.max( fitHeightDistance, fitWidthDistance );
-  
-  const direction = controls.target.clone()
-    .sub( camera.position )
-    .normalize()
-    .multiplyScalar( distance );
-  controls.maxDistance = distance * 10;
-  controls.target.copy( center );
-  
+  const distance = fitOffset * Math.max(fitHeightDistance, fitWidthDistance);
+
+  // Remember the last zooming position
+  const lastCameraTarget = controls.target.clone();
+
+  // set camera to rotate around center of loaded object
   camera.near = distance / 100;
   camera.far = distance * 100;
   camera.updateProjectionMatrix();
-  camera.position.copy( controls.target ).sub(direction);
-  
+  camera.position.copy(center);
+
+  // pan camera to last zooming position
+  controls.target.copy(lastCameraTarget);
+
+  controls.maxDistance = distance * 10;
+  controls.minDistance = distance / 10;
   controls.update();
-  
 }
 
 /**
