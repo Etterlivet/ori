@@ -26,6 +26,13 @@ loader.load(initialFile, function (definition) {
     data.definition = definition;
     data.inputs = getInputs();
     compute();
+	  
+ // get the current zoom level of the camera
+    const currentZoom = camera.position.distanceTo(controls.target);
+
+    // zoom to the selection using the current zoom level
+    zoomCameraToSelection(scene, currentZoom);
+	  
   }
 });
 
@@ -211,9 +218,6 @@ async function compute() {
     // if there was an error fetching or parsing the file, display an error message
     console.error('Error loading file: ' + filename + '\n' + error.message);
   }
-	
-// Update storedZoomLevel to current camera zoom level
-  storedZoomLevel = controls.getZoom();
 }
 
 
@@ -352,37 +356,20 @@ function onWindowResize() {
 /**
  * Helper function that behaves like rhino's "zoom to selection", but for three.js!
  */
+function zoomCameraToSelection(selection, currentZoom = 1) {
+  const box = new THREE.Box3().setFromObject(selection);
+  const size = box.getSize(new THREE.Vector3()).length();
+  const center = box.getCenter(new THREE.Vector3());
 
-let storedZoomLevel = null; // Declare variable to store zoom level
+  const camera = scene.getObjectByName("camera");
+  camera.position.copy(center);
+  camera.position.x += size / 2.0;
+  camera.position.y += size / 5.0;
+  camera.position.z += size * currentZoom;
 
-function zoomCameraToSelection( selection, fitOffset = 1.2 ) {
-  
-    const box = new THREE.Box3().setFromObject( selection );
-  const size = box.getSize( new THREE.Vector3() );
-  const center = box.getCenter( new THREE.Vector3() );
-
-  const maxSize = Math.max( size.x, size.y, size.z );
-  const fitHeightDistance = maxSize / ( 2 * Math.atan( Math.PI * camera.fov / 360 ) );
-  const fitWidthDistance = fitHeightDistance / camera.aspect;
-  const distance = fitOffset * Math.max( fitHeightDistance, fitWidthDistance );
-
-  const direction = controls.target.clone()
-    .sub( camera.position )
-    .normalize()
-    .multiplyScalar( distance );
-  controls.maxDistance = distance * 10;
-  controls.target.copy( center );
-
-  camera.near = distance / 100;
-  camera.far = distance * 100;
-  camera.updateProjectionMatrix();
-  camera.position.copy( controls.target ).sub(direction);
-
-  // Use stored zoom level if available, otherwise use default zoom level
-  const zoomLevel = storedZoomLevel !== null ? storedZoomLevel : distance;
-  controls.setZoom(zoomLevel);
+  controls.target.copy(center);
+  controls.update();
 }
-
 
 /**
  * This function is called when the download button is clicked
