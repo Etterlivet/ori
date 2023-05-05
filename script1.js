@@ -116,9 +116,6 @@ let scene, camera, renderer, controls
 /**
  * Sets up the scene, camera, renderer, lights and controls and starts the animation
  */
-
-let cameraState = { position: new THREE.Vector3(), target: new THREE.Vector3() };
-
 function init() {
 
     // Rhino models are z-up, so set this as the default
@@ -169,9 +166,6 @@ function init() {
 
     // handle changes in the window size
     window.addEventListener( 'resize', onWindowResize, false )
-	
-	controls.target.toArray(cameraState.target);
-camera.position.toArray(cameraState.position);
 
     animate()
 }
@@ -276,15 +270,6 @@ function collectResults(responseJson) {
 
         // add object graph from rhino model to three.js scene
         scene.add( object )
-	    
-	        // ...
-    // Update the scene
-    // ...
-    // Set the camera to the previous state
-    camera.position.copy(cameraState.position);
-    controls.target.copy(cameraState.target);
-    controls.update();
-	    
 
         // hide spinner and enable download button
         showSpinner(false)
@@ -292,9 +277,6 @@ function collectResults(responseJson) {
 
         // zoom to extents
         zoomCameraToSelection(camera, controls, scene.children)
-	    
-	
-	    
     })
 }
 
@@ -367,42 +349,37 @@ function onWindowResize() {
 /**
  * Helper function that behaves like rhino's "zoom to selection", but for three.js!
  */
-function zoomCameraToSelection(camera, controls, selection, fitOffset = 1.2) {
-  // Store the current camera state
-  const currentState = {
-    position: camera.position.clone(),
-    quaternion: camera.quaternion.clone(),
-    zoom: controls.object.zoom,
-    target: controls.target.clone()
-  };
-
-  // Create a bounding box around the selection
-  const box = new THREE.Box3().setFromObject(selection);
-
-  // Calculate the center of the bounding box
-  const center = box.getCenter(new THREE.Vector3());
-
-  // Calculate the radius of the bounding box
-  const radius = box.getSize(new THREE.Vector3()).length() / 2;
-
-  // Calculate the distance from the camera to the center of the bounding box
-  const distance = radius / Math.tan(Math.PI * 0.5 * camera.fov / 180);
-
-  // Set the new camera position and target
-  camera.position.copy(center);
-  camera.position.z += distance;
-  controls.target.copy(center);
-
-  // Fit the selection within the camera's field of view
-  controls.maxDistance = distance * fitOffset;
+function zoomCameraToSelection( camera, controls, selection, fitOffset = 1.2 ) {
+  
+  const box = new THREE.Box3();
+  
+  for( const object of selection ) {
+    if (object.isLight) continue
+    box.expandByObject( object );
+  }
+  
+  const size = box.getSize( new THREE.Vector3() );
+  const center = box.getCenter( new THREE.Vector3() );
+  
+  const maxSize = Math.max( size.x, size.y, size.z );
+  const fitHeightDistance = maxSize / ( 2 * Math.atan( Math.PI * camera.fov / 360 ) );
+  const fitWidthDistance = fitHeightDistance / camera.aspect;
+  const distance = fitOffset * Math.max( fitHeightDistance, fitWidthDistance );
+  
+  const direction = controls.target.clone()
+    .sub( camera.position )
+    .normalize()
+    .multiplyScalar( distance );
+  controls.maxDistance = distance * 10;
+  controls.target.copy( center );
+  
+  camera.near = distance / 100;
+  camera.far = distance * 100;
+  camera.updateProjectionMatrix();
+  camera.position.copy( controls.target ).sub(direction);
+  
   controls.update();
-
-  // Restore the previous camera state
-  camera.position.copy(currentState.position);
-  camera.quaternion.copy(currentState.quaternion);
-  controls.object.zoom = currentState.zoom;
-  controls.target.copy(currentState.target);
-  controls.update();
+  
 }
 
 /**
