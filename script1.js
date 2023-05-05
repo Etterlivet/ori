@@ -25,6 +25,13 @@ loader.load(initialFile, function (definition) {
   if (definition) {
     data.definition = definition;
     data.inputs = getInputs();
+   
+	  // if there is a stored zoom level, use it as the default
+    if (zoomLevel !== 1) {
+      camera.zoom = zoomLevel;
+      camera.updateProjectionMatrix();
+    }
+
     compute();
   }
 });
@@ -113,6 +120,9 @@ function getInputs() {
 // more globals
 let scene, camera, renderer, controls
 
+// add this global variable to store the zoom level
+let zoomLevel = 1;
+
 /**
  * Sets up the scene, camera, renderer, lights and controls and starts the animation
  */
@@ -163,6 +173,18 @@ function init() {
 
     scene.background = cubeMap
     material.envMap = scene.background
+	
+	// if there is a stored zoom level, use it as the default
+    if (zoomLevel !== 1) {
+        camera.zoom = zoomLevel;
+        camera.updateProjectionMatrix();
+    }
+
+    controls.addEventListener('change', () => {
+        // update the zoom level whenever the controls change
+        zoomLevel = camera.zoom;
+    });
+	
 
     // handle changes in the window size
     window.addEventListener( 'resize', onWindowResize, false )
