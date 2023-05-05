@@ -11,6 +11,10 @@ let material = new THREE.MeshStandardMaterial( {
   roughness: 0.0
 } );
 
+// Add these variables at the top of the script
+let prevCameraPosition = new THREE.Vector3(1, -1, 1);
+let prevZoom = 1;
+let updateCamera = true;
 
 
 const initialFile = 'solve/b_ring.gh';
@@ -29,9 +33,21 @@ loader.load(initialFile, function (definition) {
     data.definition = definition;
     data.inputs = getInputs();
     compute();
-	  // Store initial camera position and zoom level
-    initialCameraPosition.copy(camera.position);
-    initialZoom = controls.getZoom();
+ 
+// If this is the first model, store the initial camera position and zoom level
+if (updateCamera) {
+  prevCameraPosition.copy(camera.position);
+  prevZoom = controls.getZoom();
+  updateCamera = false;
+} else { // Otherwise, set the camera to the previous position and zoom level
+  camera.position.copy(prevCameraPosition);
+  controls.update();
+  controls.setZoom(prevZoom);
+}	  
+	  
+	  
+	  
+	  
   }
 });
 
@@ -78,6 +94,7 @@ for (const input of Object.values(inputs)) {
       // update 'data' object and recompute
       data.definition = definition;
       data.inputs = currentInputs;
+	     updateCamera = true; // Set the flag to true
       compute();
     }
   }
