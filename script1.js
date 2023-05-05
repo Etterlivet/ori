@@ -19,22 +19,32 @@ const data = {
   inputs: getInputs(),
 };
 
+let previousZoom = null;
+
 const loader = new Rhino3dmLoader();
 loader.setLibraryPath('https://cdn.jsdelivr.net/npm/rhino3dm@0.15.0-beta/');
+
+function load(file) {
 loader.load(initialFile, function (definition) {
   if (definition) {
     data.definition = definition;
     data.inputs = getInputs();
     compute();
 	  
- // get the current zoom level of the camera
-    const currentZoom = camera.position.distanceTo(controls.target);
+	  // get the current zoom level of the camera
+      const currentZoom = camera.position.distanceTo(controls.target);
 
-    // zoom to the selection using the current zoom level
-    zoomCameraToSelection(scene, currentZoom);
-	  
-  }
-});
+      // use the previous zoom level if available
+      const zoomLevel = previousZoom !== null ? previousZoom : currentZoom;
+
+      // zoom to the selection using the zoom level
+      zoomCameraToSelection(scene, zoomLevel);
+
+      // store the current zoom level as the previous zoom level
+      previousZoom = currentZoom;
+    }
+  });
+}
 
 // globals
 // test
@@ -356,19 +366,39 @@ function onWindowResize() {
 /**
  * Helper function that behaves like rhino's "zoom to selection", but for three.js!
  */
-function zoomCameraToSelection(selection, currentZoom = 1) {
-  const box = new THREE.Box3().setFromObject(selection);
-  const size = box.getSize(new THREE.Vector3()).length();
-  const center = box.getCenter(new THREE.Vector3());
+let currentZoom = 1;
 
-  const camera = scene.getObjectByName("camera");
-  camera.position.copy(center);
-  camera.position.x += size / 2.0;
-  camera.position.y += size / 5.0;
-  camera.position.z += size * currentZoom;
-
-  controls.target.copy(center);
+function zoomCameraToSelection(object, zoomLevel = currentZoom) {
+  
+  const box = new THREE.Box3();
+  
+  for( const object of selection ) {
+    if (object.isLight) continue
+    box.expandByObject( object );
+  }
+  
+  const size = box.getSize( new THREE.Vector3() );
+  const center = box.getCenter( new THREE.Vector3() );
+  
+  const maxSize = Math.max( size.x, size.y, size.z );
+  const fitHeightDistance = maxSize / ( 2 * Math.atan( Math.PI * camera.fov / 360 ) );
+  const fitWidthDistance = fitHeightDistance / camera.aspect;
+  const distance = fitOffset * Math.max( fitHeightDistance, fitWidthDistance );
+  
+  const direction = controls.target.clone()
+    .sub( camera.position )
+    .normalize()
+    .multiplyScalar( distance );
+  controls.maxDistance = distance * 10;
+  controls.target.copy( center );
+  
+  camera.near = distance / 100;
+  camera.far = distance * 100;
+  camera.updateProjectionMatrix();
+  camera.position.copy( controls.target ).sub(direction);
+  currentZoom = zoomLevel; // save the zoom level for the next model
   controls.update();
+  
 }
 
 /**
