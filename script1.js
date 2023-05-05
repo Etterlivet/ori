@@ -44,7 +44,7 @@ if (updateCamera) {
   controls.update();
   controls.setZoom(prevZoom);
 }	  
-	  
+updateCamera = true; // Set the flag to true	  
 	  
 	  
 	  
