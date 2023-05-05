@@ -19,6 +19,9 @@ const data = {
   inputs: getInputs(),
 };
 
+let initialCameraPosition = new THREE.Vector3(1, -1, 1);
+let initialZoom = 1;
+
 const loader = new Rhino3dmLoader();
 loader.setLibraryPath('https://cdn.jsdelivr.net/npm/rhino3dm@0.15.0-beta/');
 loader.load(initialFile, function (definition) {
@@ -26,6 +29,9 @@ loader.load(initialFile, function (definition) {
     data.definition = definition;
     data.inputs = getInputs();
     compute();
+	  // Store initial camera position and zoom level
+    initialCameraPosition.copy(camera.position);
+    initialZoom = controls.getZoom();
   }
 });
 
