@@ -21,20 +21,31 @@ const data = {
 
 const loader = new Rhino3dmLoader();
 loader.setLibraryPath('https://cdn.jsdelivr.net/npm/rhino3dm@0.15.0-beta/');
+
+let zoomLevel = null; // add this variable to store the zoom level
 loader.load(initialFile, function (definition) {
   if (definition) {
     data.definition = definition;
     data.inputs = getInputs();
-   
-	  // if there is a stored zoom level, use it as the default
-    if (zoomLevel !== 1) {
-      camera.zoom = zoomLevel;
-      camera.updateProjectionMatrix();
-    }
-
     compute();
+	  
+	  // zoom the camera to the selection for the first file only
+    if (!zoomLevel) {
+      zoomLevel = zoomCameraToSelection(camera, scene);
+    } else {
+      // for subsequent files, set the camera's zoom level to the previous level
+      setCameraZoomLevel(camera, zoomLevel);
+    }
+  
   }
 });
+
+function setCameraZoomLevel(camera, zoomLevel) {
+  const zoomFactor = Math.pow(0.95, zoomLevel);
+  camera.zoom = zoomFactor;
+  camera.updateProjectionMatrix();
+}
+
 
 // globals
 // test
@@ -120,9 +131,6 @@ function getInputs() {
 // more globals
 let scene, camera, renderer, controls
 
-// add this global variable to store the zoom level
-let zoomLevel = 1;
-
 /**
  * Sets up the scene, camera, renderer, lights and controls and starts the animation
  */
@@ -173,18 +181,6 @@ function init() {
 
     scene.background = cubeMap
     material.envMap = scene.background
-	
-	// if there is a stored zoom level, use it as the default
-    if (zoomLevel !== 1) {
-        camera.zoom = zoomLevel;
-        camera.updateProjectionMatrix();
-    }
-
-    controls.addEventListener('change', () => {
-        // update the zoom level whenever the controls change
-        zoomLevel = camera.zoom;
-    });
-	
 
     // handle changes in the window size
     window.addEventListener( 'resize', onWindowResize, false )
@@ -371,38 +367,23 @@ function onWindowResize() {
 /**
  * Helper function that behaves like rhino's "zoom to selection", but for three.js!
  */
-function zoomCameraToSelection( camera, controls, selection, fitOffset = 1.2 ) {
-  
-  const box = new THREE.Box3();
-  
-  for( const object of selection ) {
-    if (object.isLight) continue
-    box.expandByObject( object );
-  }
-  
-  const size = box.getSize( new THREE.Vector3() );
-  const center = box.getCenter( new THREE.Vector3() );
-  
-  const maxSize = Math.max( size.x, size.y, size.z );
-  const fitHeightDistance = maxSize / ( 2 * Math.atan( Math.PI * camera.fov / 360 ) );
+function zoomCameraToSelection(camera, scene) {
+  const box = new THREE.Box3().setFromObject(scene);
+  const size = box.getSize(new THREE.Vector3()).length();
+  const center = box.getCenter(new THREE.Vector3());
+  const maxSize = Math.max(box.max.x - box.min.x, box.max.y - box.min.y, box.max.z - box.min.z);
+  const fitHeightDistance = maxSize / (2 * Math.atan((Math.PI * camera.fov) / 360));
   const fitWidthDistance = fitHeightDistance / camera.aspect;
-  const distance = fitOffset * Math.max( fitHeightDistance, fitWidthDistance );
-  
-  const direction = controls.target.clone()
-    .sub( camera.position )
-    .normalize()
-    .multiplyScalar( distance );
-  controls.maxDistance = distance * 10;
-  controls.target.copy( center );
-  
-  camera.near = distance / 100;
-  camera.far = distance * 100;
+  const distance = 1.2 * Math.max(fitHeightDistance, fitWidthDistance);
+  const direction = camera.position.clone().sub(center).normalize().multiplyScalar(distance);
+  camera.position.copy(center).add(direction);
+  camera.near = size / 100;
+  camera.far = size * 100;
   camera.updateProjectionMatrix();
-  camera.position.copy( controls.target ).sub(direction);
-  
-  controls.update();
-  
+  camera.lookAt(center);
+  return camera.zoom;
 }
+
 
 /**
  * This function is called when the download button is clicked
