@@ -19,6 +19,7 @@ const data = {
   inputs: getInputs(),
 };
 
+let isFirstModel = false; // boolean flag for the first loaded 3D model
 const loader = new Rhino3dmLoader();
 loader.setLibraryPath('https://cdn.jsdelivr.net/npm/rhino3dm@0.15.0-beta/');
 loader.load(initialFile, function (definition) {
@@ -26,6 +27,7 @@ loader.load(initialFile, function (definition) {
     data.definition = definition;
     data.inputs = getInputs();
     compute();
+isFirstModel = true; // set the flag to true for the first model
   }
 });
 
@@ -112,7 +114,7 @@ function getInputs() {
 
 // more globals
 let scene, camera, renderer, controls
-let previousCameraState = null;
+
 /**
  * Sets up the scene, camera, renderer, lights and controls and starts the animation
  */
@@ -152,20 +154,7 @@ function init() {
 
     // add some controls to orbit the camera
     controls = new OrbitControls(camera, renderer.domElement)
- controls.target.set(0, 0, 0);
-  controls.update();
-	
-	// If there is no previous camera state, zoom the camera to fit the entire scene
-  if (!previousCameraState) {
-    zoomCameraToSelection(scene, camera, controls);
-  } else {
-    // Otherwise, use the previous camera state to set the camera position and angle
-    camera.position.copy(previousCameraState.position);
-    camera.quaternion.copy(previousCameraState.quaternion);
-    camera.updateProjectionMatrix();
-  }
-	
-	
+
     // add a directional light
     const directionalLight = new THREE.DirectionalLight( 0xffffff )
     directionalLight.intensity = 2
@@ -179,22 +168,14 @@ function init() {
 
     // handle changes in the window size
     window.addEventListener( 'resize', onWindowResize, false )
-	
-		 previousCameraState = {
-    position: camera.position.clone(),
-    quaternion: camera.quaternion.clone()
-  };
 
     animate()
-	
-
-	
 }
 
 /**
  * Call appserver
  */
-let isFirstUpdate = true;
+
 async function compute() {
 
   // get the inputs from the html
@@ -370,25 +351,38 @@ function onWindowResize() {
 /**
  * Helper function that behaves like rhino's "zoom to selection", but for three.js!
  */
-function zoomCameraToSelection(scene, camera, controls) {
-  const box = new THREE.Box3().setFromObject(scene);
-  const size = box.getSize(new THREE.Vector3()).length();
-  const center = box.getCenter(new THREE.Vector3());
-
-  // Reset camera position and angle
-  camera.position.copy(center);
-  camera.near = size / 100;
-  camera.far = size * 100;
+function zoomCameraToSelection( camera, controls, selection, fitOffset = 1.2 ) {
+  if (isFirstModel) {
+  const box = new THREE.Box3();
+  
+  for( const object of selection ) {
+    if (object.isLight) continue
+    box.expandByObject( object );
+  }
+  
+  const size = box.getSize( new THREE.Vector3() );
+  const center = box.getCenter( new THREE.Vector3() );
+  
+  const maxSize = Math.max( size.x, size.y, size.z );
+  const fitHeightDistance = maxSize / ( 2 * Math.atan( Math.PI * camera.fov / 360 ) );
+  const fitWidthDistance = fitHeightDistance / camera.aspect;
+  const distance = fitOffset * Math.max( fitHeightDistance, fitWidthDistance );
+  
+  const direction = controls.target.clone()
+    .sub( camera.position )
+    .normalize()
+    .multiplyScalar( distance );
+  controls.maxDistance = distance * 10;
+  controls.target.copy( center );
+  
+  camera.near = distance / 100;
+  camera.far = distance * 100;
   camera.updateProjectionMatrix();
-
-  // Set the camera target to the center of the scene
-  controls.target.copy(center);
+  camera.position.copy( controls.target ).sub(direction);
+  
   controls.update();
-
-  // Zoom the camera to fit the entire scene
-  controls.maxDistance = size * 10;
-  controls.minDistance = size / 10;
-  controls.update();
+ }
+  
 }
 
 /**
