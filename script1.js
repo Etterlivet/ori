@@ -19,32 +19,15 @@ const data = {
   inputs: getInputs(),
 };
 
-let previousZoom = null;
-
 const loader = new Rhino3dmLoader();
 loader.setLibraryPath('https://cdn.jsdelivr.net/npm/rhino3dm@0.15.0-beta/');
-
-function load(file) {
 loader.load(initialFile, function (definition) {
   if (definition) {
     data.definition = definition;
     data.inputs = getInputs();
     compute();
-	  
-	  // get the current zoom level of the camera
-      const currentZoom = camera.position.distanceTo(controls.target);
-
-      // use the previous zoom level if available
-      const zoomLevel = previousZoom !== null ? previousZoom : currentZoom;
-
-      // zoom to the selection using the zoom level
-      zoomCameraToSelection(scene, zoomLevel);
-
-      // store the current zoom level as the previous zoom level
-      previousZoom = currentZoom;
-    }
-  });
-}
+  }
+});
 
 // globals
 // test
@@ -366,9 +349,7 @@ function onWindowResize() {
 /**
  * Helper function that behaves like rhino's "zoom to selection", but for three.js!
  */
-let currentZoom = 1;
-
-function zoomCameraToSelection(object, zoomLevel = currentZoom) {
+function zoomCameraToSelection( camera, controls, selection, fitOffset = 1.2 ) {
   
   const box = new THREE.Box3();
   
@@ -396,7 +377,7 @@ function zoomCameraToSelection(object, zoomLevel = currentZoom) {
   camera.far = distance * 100;
   camera.updateProjectionMatrix();
   camera.position.copy( controls.target ).sub(direction);
-  currentZoom = zoomLevel; // save the zoom level for the next model
+  
   controls.update();
   
 }
