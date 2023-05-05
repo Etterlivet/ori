@@ -278,7 +278,7 @@ function collectResults(responseJson) {
         downloadButton.disabled = false
 
         // zoom to extents
-        zoomCameraToSelection(camera, controls, scene.children)
+       // zoomCameraToSelection(camera, controls, scene.children)
     })
 }
 
