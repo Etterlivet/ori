@@ -125,7 +125,18 @@ function init() {
     scene = new THREE.Scene()
     scene.background = new THREE.Color(1, 1, 1)
     camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 1, 1000)
-    camera.position.set(1, -1, 1) // like perspective view
+	
+        if (isFirstTime) {
+      // zoom camera to selection for the first view
+      zoomCameraToSelection(camera, controls, scene);
+      isFirstTime = false;
+    } else {
+      // inherit camera state from previous view for subsequent views
+      camera.position.copy(previousCameraPosition);
+      camera.quaternion.copy(previousCameraQuaternion);
+      camera.updateProjectionMatrix();
+    }
+	
     
     //very light grey for background, like rhino
 
@@ -152,6 +163,8 @@ function init() {
 
     // add some controls to orbit the camera
     controls = new OrbitControls(camera, renderer.domElement)
+ 
+	 controls.addEventListener('change', render)
 
     // add a directional light
     const directionalLight = new THREE.DirectionalLight( 0xffffff )
@@ -217,6 +230,11 @@ async function compute() {
 /**
  * Parse response
  */
+
+let isFirstView = true;
+let previousCameraState;
+
+
 function collectResults(responseJson) {
 
     const values = responseJson.values
@@ -270,13 +288,31 @@ function collectResults(responseJson) {
 
         // add object graph from rhino model to three.js scene
         scene.add( object )
+    
 
         // hide spinner and enable download button
         showSpinner(false)
         downloadButton.disabled = false
+	    
+	    
+	    	    // if this is the first view, zoom to extents
+    if (isFirstView) {
+      zoomCameraToSelection(camera, controls, scene.children);
+      isFirstView = false;
+    } else {
+      // otherwise, restore previous camera state
+      camera.position.copy(previousCameraState.position);
+      camera.quaternion.copy(previousCameraState.quaternion);
+      camera.updateProjectionMatrix();
+    }
 
-        // zoom to extents
-        zoomCameraToSelection(camera, controls, scene.children)
+    // save current camera state for next view
+    previousCameraState = {
+      position: new THREE.Vector3().copy(camera.position),
+      quaternion: new THREE.Quaternion().copy(camera.quaternion),
+    };
+
+         
     })
 }
 
