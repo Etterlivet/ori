@@ -305,14 +305,17 @@ function collectResults(responseJson) {
 	    
 	    
 	    	    // if this is the first view, zoom to extents
-    if (isFirstView) {
-      zoomCameraToSelection(camera, controls, scene.children);
-      isFirstView = false;
-    } else {
-      // otherwise, restore previous camera state
-      camera.position.copy(previousCameraState.position);
-      camera.quaternion.copy(previousCameraState.quaternion);
-      camera.updateProjectionMatrix();
+ if (!isFirstTime) {
+  // inherit camera state from previous view for subsequent views
+  camera.position.copy(previousCameraPosition);
+  camera.quaternion.copy(previousCameraQuaternion);
+  camera.updateProjectionMatrix();
+}
+
+// Store current camera state for next view
+previousCameraPosition.copy(camera.position);
+previousCameraQuaternion.copy(camera.quaternion);
+isFirstTime = false;
     }
 
     // save current camera state for next view
