@@ -278,7 +278,15 @@ function collectResults(responseJson) {
         downloadButton.disabled = false
 
         // zoom to extents
-       // zoomCameraToSelection(camera, controls, scene.children)
+	    
+	    if (isFirstModel) {
+    // Call the zoomCameraToSelection function or any other code that needs to be executed only for the first response
+    zoomCameraToSelection(camera, controls, scene.children);
+    
+    // Set the flag to false to prevent executing the code again for subsequent responses
+    isFirstModel = false;
+  }
+        
     })
 }
 
