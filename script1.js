@@ -113,6 +113,9 @@ function getInputs() {
 // more globals
 let scene, camera, renderer, controls
 
+let previousCameraPosition = new THREE.Vector3();
+let previousCameraQuaternion = new THREE.Quaternion();
+
 /**
  * Sets up the scene, camera, renderer, lights and controls and starts the animation
  */
@@ -126,7 +129,7 @@ function init() {
     scene.background = new THREE.Color(1, 1, 1)
     camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 1, 1000)
 	
-        if (isFirstTime) {
+    if (isFirstTime) {
       // zoom camera to selection for the first view
       zoomCameraToSelection(camera, controls, scene);
       isFirstTime = false;
@@ -136,7 +139,10 @@ function init() {
       camera.quaternion.copy(previousCameraQuaternion);
       camera.updateProjectionMatrix();
     }
-	
+
+    // store the camera's position and quaternion
+    previousCameraPosition.copy(camera.position);
+    previousCameraQuaternion.copy(camera.quaternion);
     
     //very light grey for background, like rhino
 
@@ -164,7 +170,10 @@ function init() {
     // add some controls to orbit the camera
     controls = new OrbitControls(camera, renderer.domElement)
  
-	 controls.addEventListener('change', render)
+controls.addEventListener('change', () => {
+  previousCameraPosition.copy(camera.position);
+  previousCameraQuaternion.copy(camera.quaternion);
+});
 
     // add a directional light
     const directionalLight = new THREE.DirectionalLight( 0xffffff )
