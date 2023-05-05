@@ -11,10 +11,6 @@ let material = new THREE.MeshStandardMaterial( {
   roughness: 0.0
 } );
 
-// Add these variables at the top of the script
-let prevCameraPosition = new THREE.Vector3(1, -1, 1);
-let prevZoom = 1;
-let updateCamera = true;
 
 
 const initialFile = 'solve/b_ring.gh';
@@ -23,9 +19,6 @@ const data = {
   inputs: getInputs(),
 };
 
-let initialCameraPosition = new THREE.Vector3(1, -1, 1);
-let initialZoom = 1;
-
 const loader = new Rhino3dmLoader();
 loader.setLibraryPath('https://cdn.jsdelivr.net/npm/rhino3dm@0.15.0-beta/');
 loader.load(initialFile, function (definition) {
@@ -33,21 +26,6 @@ loader.load(initialFile, function (definition) {
     data.definition = definition;
     data.inputs = getInputs();
     compute();
- 
-// If this is the first model, store the initial camera position and zoom level
-if (updateCamera) {
-  prevCameraPosition.copy(camera.position);
-  prevZoom = controls.getZoom();
-  updateCamera = false;
-} else { // Otherwise, set the camera to the previous position and zoom level
-  camera.position.copy(prevCameraPosition);
-  controls.update();
-  controls.setZoom(prevZoom);
-}	  
-updateCamera = true; // Set the flag to true	  
-	  
-	  
-	  
   }
 });
 
@@ -94,7 +72,6 @@ for (const input of Object.values(inputs)) {
       // update 'data' object and recompute
       data.definition = definition;
       data.inputs = currentInputs;
-	     updateCamera = true; // Set the flag to true
       compute();
     }
   }
@@ -300,15 +277,6 @@ function collectResults(responseJson) {
 
         // zoom to extents
         zoomCameraToSelection(camera, controls, scene.children)
-	    
-	    // check if there is a stored zoom level
-        if (zoomLevel !== 1) {
-            // set camera position based on stored zoom level
-            camera.position.set(0, 0, zoomLevel * 100);
-        } else {
-            // call zoomCameraToSelection() with default settings
-            zoomCameraToSelection(selection, camera);
-        }
     })
 }
 
@@ -381,14 +349,12 @@ function onWindowResize() {
 /**
  * Helper function that behaves like rhino's "zoom to selection", but for three.js!
  */
-let zoomLevel = null;
-
 function zoomCameraToSelection( camera, controls, selection, fitOffset = 1.2 ) {
   
   const box = new THREE.Box3();
   
   for( const object of selection ) {
-    if (object.isLight) continue;
+    if (object.isLight) continue
     box.expandByObject( object );
   }
   
@@ -400,33 +366,20 @@ function zoomCameraToSelection( camera, controls, selection, fitOffset = 1.2 ) {
   const fitWidthDistance = fitHeightDistance / camera.aspect;
   const distance = fitOffset * Math.max( fitHeightDistance, fitWidthDistance );
   
-  if (zoomLevel !== null) {
-    distance = zoomLevel;
-  }
-  
   const direction = controls.target.clone()
     .sub( camera.position )
     .normalize()
     .multiplyScalar( distance );
-
   controls.maxDistance = distance * 10;
   controls.target.copy( center );
   
   camera.near = distance / 100;
   camera.far = distance * 100;
   camera.updateProjectionMatrix();
-	
-	zoomLevel = camera.zoom;
-
   camera.position.copy( controls.target ).sub(direction);
   
   controls.update();
   
-}
-
-// when loading new 3D model, call this function to inherit previous zoom level
-function setZoomLevel(level) {
-  zoomLevel = level;
 }
 
 /**
