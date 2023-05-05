@@ -354,7 +354,7 @@ function zoomCameraToSelection( camera, controls, selection, fitOffset = 1.2 ) {
   const box = new THREE.Box3();
   
   for( const object of selection ) {
-    if (object.isLight) continue
+    if (object.isLight) continue;
     box.expandByObject( object );
   }
   
