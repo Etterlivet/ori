@@ -17,6 +17,7 @@ const initialFile = 'solve/b_ring.gh';
 const data = {
   definition: '',
   inputs: getInputs(),
+	initialLoaded: false, // new property
 };
 
 const loader = new Rhino3dmLoader();
@@ -276,7 +277,14 @@ function collectResults(responseJson) {
         downloadButton.disabled = false
 
         // zoom to extents
-        zoomCameraToSelection(camera, controls, scene.children)
+       // zoomCameraToSelection(camera, controls, scene.children)
+	 
+	    if (!data.initialLoaded) {
+      zoomCameraToSelection(camera, controls, scene.children);
+      data.initialLoaded = true; // mark the initial loaded 3D as processed
+    }
+	    
+	    
     })
 }
 
