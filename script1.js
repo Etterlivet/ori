@@ -19,7 +19,6 @@ const data = {
   inputs: getInputs(),
 };
 
-let isFirstModel = false; // boolean flag for the first loaded 3D model
 const loader = new Rhino3dmLoader();
 loader.setLibraryPath('https://cdn.jsdelivr.net/npm/rhino3dm@0.15.0-beta/');
 loader.load(initialFile, function (definition) {
@@ -27,7 +26,6 @@ loader.load(initialFile, function (definition) {
     data.definition = definition;
     data.inputs = getInputs();
     compute();
- 
   }
 });
 
@@ -278,15 +276,7 @@ function collectResults(responseJson) {
         downloadButton.disabled = false
 
         // zoom to extents
-	    
-	    if (isFirstModel) {
-    // Call the zoomCameraToSelection function or any other code that needs to be executed only for the first response
-    zoomCameraToSelection(camera, controls, scene.children);
-    
-    // Set the flag to false to prevent executing the code again for subsequent responses
-    isFirstModel = false;
-  }
-        
+        zoomCameraToSelection(camera, controls, scene.children)
     })
 }
 
@@ -360,7 +350,7 @@ function onWindowResize() {
  * Helper function that behaves like rhino's "zoom to selection", but for three.js!
  */
 function zoomCameraToSelection( camera, controls, selection, fitOffset = 1.2 ) {
-  if (isFirstModel) {
+  
   const box = new THREE.Box3();
   
   for( const object of selection ) {
@@ -389,7 +379,6 @@ function zoomCameraToSelection( camera, controls, selection, fitOffset = 1.2 ) {
   camera.position.copy( controls.target ).sub(direction);
   
   controls.update();
- }
   
 }
 
