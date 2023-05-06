@@ -357,7 +357,7 @@ function onWindowResize() {
 /**
  * Helper function that behaves like rhino's "zoom to selection", but for three.js!
  */
-function zoomCameraToSelection( camera, controls, selection, fitOffset = 0.8 ) {
+function zoomCameraToSelection( camera, controls, selection, fitOffset = 1.6 ) {
   
   const box = new THREE.Box3();
   
