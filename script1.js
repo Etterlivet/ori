@@ -27,7 +27,7 @@ loader.load(initialFile, function (definition) {
     data.definition = definition;
     data.inputs = getInputs();
     compute();
-isFirstModel = true; // set the flag to true for the first model
+ 
   }
 });
 
